@@ -7,5 +7,11 @@ for the month number that the user enters. Keep repeating this until the user en
 Once the user quits, print "Goodbye!"
 
 months = "JanFebMarAprMayJunJulAugSepOctNovDec"
-
 '''
+userinput = 1
+while userinput <= 12 and userinput>0:
+    userinput = int(input("Enter the number of the month youd like to abbreviate"))
+    months = "JanFebMarAprMayJunJulAugSepOctNovDec"
+    print("The abbreviation for that month is:", months[(userinput * 3)-3:userinput * 3])
+print("Goodbye!")
+
