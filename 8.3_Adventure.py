@@ -57,21 +57,43 @@ room_list.append(room)
 
 
 # Class for creation of items
+
+
+class Creature:
+
+    def __init__(self, kind, name="", description="", cont=""):
+        self.name = name
+        self.description = description
+        self.kind = kind
+        self.cont = cont
+        self.list = []
+        self.value = None
+
+    def create(self, lst):
+        self.value = lst
+        for y in self.value:
+            self.list.append(y)
+
+    def lst(self):
+        for z in self.list:
+            print(z)
+
+
 class Item:
 
-    def __init__(self, item_type, name, description="", damage=0, tier=0, uses=-1, effect="None"):
+    def __init__(self, item_type, name, description="", damage=0, tier=0, uses=-1, effect=-1, eatmsg="None"):
         self.item_type = item_type
         self.name = name
         self.description = description
         self.damage = damage
         self.tier = tier
         self.uses = uses
+        self.effect = effect
 
     def properties(self, damage, tier, uses):
         self.damage = damage
         self.tier = tier
         self.uses = uses
-
 
 
 class Loot:
@@ -143,16 +165,18 @@ stones = Item(material, "Pile of Stones", "This could be used for something!")
 gauze = Item(material, "Fresh Gauze", "I have a feeling you'll be needing this...")
 rope = Item(material, "Knotted Rope", "Undo the knots and you can make a noose!")
 hammer = Item(material, "Small Hammer", "Are you strong enough to lift that?")
+bhammer = Item(material, "Big Hammer", "Who are you, Bob the Builder?")
 # add materials to list
-materials = [nails, matches, stones]
+materials = [nails, matches, stones, gauze, rope, hammer, bhammer]
 
 # Consumables
-cheese = Item(consumable, "Swiss Cheese", "It's got holes in it!")
-flesh = Item(consumable, "Rotten Flesh", "Wait, this isn't minecraft!")
-apple = Item(consumable, "Bruised Apple", "Watch your back, before you get bruised too...")
-mouse = Item(consumable, "Mutilated Mouse", "Not very appetizing... yet.")
-bread = Item(consumable, "Stale loaf of Bread", "This could do some damage... Or you could eat it")
-medicine = Item(consumable, "Mysterious Bottle Of Medicine", "At least you have a painless way out...")
+cheese = Item(consumable, "Swiss Cheese", "It's got holes in it!", effect=0)
+flesh = Item(consumable, "Rotten Flesh", "Wait, this isn't minecraft!", effect=1)
+apple = Item(consumable, "Bruised Apple", "Watch your back, before you get bruised too...", effect=0)
+mouse = Item(consumable, "Mutilated Mouse", "Not very appetizing... yet.", effect=0)
+bread = Item(consumable, "Stale loaf of Bread", "This could do some damage... Or you could eat it", effect=0)
+medicine = Item(consumable, "Mysterious Bottle Of Medicine", "At least you have a painless way out...", effect=2)
+ratpoison = Item(consumable, "Rat Poison", "You shouldn't eat this... Should you?", effect=1)
 # add consumables to list
 consumables = [cheese, flesh, apple, mouse, bread, medicine]
 item_types = ["consumable", "material", "junk", "weapon"]
@@ -213,19 +237,60 @@ def probsim(tier, runs, ipr=1):
             elif loot[i].item_type == consumable:
                 consumablecount += 1
 
-    print(f"Junk: {junkcount}\n weapons: {weaponcount}\n consumable: {consumablecount}\n material: {materialcount}")
+    print(f"Junk: {junkcount} items. {(junkcount/runs)*100}%\n weapons: {weaponcount} items. {(weaponcount/runs)*100}%\n "
+          f"consumable: {consumablecount} items {(consumablecount/runs)*100}%\n material: {materialcount} items. {(materialcount/runs)*100}%")
 
 
-dev = False
-if dev is True:
-    print("\ntier 0")
-    probsim(0, 100)
-    print("\ntier 1")
-    probsim(1, 100)
-    print("\ntier 2")
-    probsim(2, 100)
-    print("\ntier 3")
-    probsim(3, 100)
+def dev(inp):
+    if inp == "1":
+        for rooms in room_list:
+            print(f"\n{room_list[room_list.index(rooms)][0].upper()}:")
+            for those in room_list[room_list.index(rooms)][5]:
+                print(those.name)
+    elif inp == "2":
+        kind = input("\n1) tier sim\n 2) loot sim\n 3) tier + loot sim")
+        if kind == "1":
+            for i in range(0, 14):
+                tier = random.choices([0, 1, 2, 3], weights=[5, 4, 3, 1.5], k=1)[0]
+                print(tier)
+        elif kind == "2":
+            a = input("Run Auto Sim? [y/n]")
+            if a.upper() == "Y":
+                print("\ntier 0")
+                probsim(0, 100)
+                print("\ntier 1")
+                probsim(1, 100)
+                print("\ntier 2")
+                probsim(2, 100)
+                print("\ntier 3")
+                probsim(3, 100)
+        elif kind == "3":
+            for them in room_list:
+                thetier = random.choices([0, 1, 2, 3], weights=[5, 4, 3, 1.5], k=1)[0]
+                test = []
+                it = gen_loot(3, thetier, any_item)
+                test.append(it)
+        elif kind == "4":
+            removed = False
+            for they in room_list:
+                for it in they[5]:
+                    print(it)
+                    print(f"Removing: {it.name}")
+                    room_list[room_list.index(they)][5].remove(it)
+                    print(f"From: {room_list[room_list.index(they)]} ")
+                    # room_list[room_list.index(they)][5].remove(it)
+            removed = True
+            if removed is True:
+                for that in room_list:
+                    roomm = int(room_list.index(that))
+                    loottier = random.choices([0, 1, 2, 3], weights=[5, 4, 3, 1.5], k=1)[0]
+                    Loot(roomm).add(gen_loot(3, loottier, any_item))
+                    print("done")
+        else:
+            t = input("What tier loot?")
+            r = input("How many runs?")
+            i = input("How many items per run?")
+            probsim(t, r, i)
 
 
 # sets up enemies
@@ -235,14 +300,31 @@ def enemies():
 
 
 # sets up health system
-def health():
-    global health
+def health(regen=0, damage=0):
+    global hp
+    hp -= damage
+    hp += regen
 
-    def damage(amount):
-        health -= amount
 
-    def regen(amount):
-        health += amount
+animals = ["Feral Rabbit", "Decrepid Racoon", "Flea Infested Squirrel", "Jumbotron", "Large sewer rat",
+           "French Baguette", "Piece of Sidewalk Chalk", "Headless Pigeon", "Piece of Sandpaper"]
+animal = Creature("good")
+animal.create(animals)
+
+
+def consume(item):
+    effect = item.effect
+    if effect == 0:
+        regen = random.randint(3,6)
+        health(regen)
+    elif effect == 1:
+        print("you aight")
+    elif effect == 2:
+        anim = random.choice(animals)
+        print("Thought you'd get out of here that easily, huh?")
+        print(f"You turned into a {anim}")
+    elif effect == -1:
+        print("You cant eat that.")
 
 
 # Prints location of player
@@ -257,6 +339,16 @@ def open_inv():
         print(z.name)
 
 
+def search():
+    if len(room_list[current_room][5]) > 0:
+        s = random.choice(room_list[current_room][5])
+        print(f"You found a {s.name}. {s.description}")
+        room_list[current_room][5].remove(s)
+        playerinv.append(s)
+    else:
+        print("You found all the items in this room!")
+
+
 # Takes various forms of user input
 def user_input(userinput="none"):
     inp = None
@@ -266,14 +358,27 @@ def user_input(userinput="none"):
             if cmd.upper()[0] in controls[1:5]:
                 inp = cmd[0]
                 travel(current_room, inp)
-            elif cmd.upper()[0] in controlkeys:
+            elif cmd.upper()[0] == "E":
                 open_inv()
+            elif cmd.lower() == "v":
+                devinp = input("1) list items in each room.\n2) probability simulation.")
+                dev(devinp)
+                inp = "dev"
+            elif cmd.upper()[0] == "Q":
+                search()
             else:
                 print(f"Invalid Command. Valid Commands: {controls + controlkeys}")
                 continue
         elif userinput == "direction":
             direct = input("Please input a direction:").upper()
             inp = direct[0]
+        elif userinput == "dev":
+            devinp = input("1) list items in each room.\n2) probability simulation.")
+            dev(devinp)
+            inp = "dev"
+        else:
+            print("Invalid Command")
+            continue
         return inp
 
 
@@ -299,7 +404,7 @@ last_room = 0
 done = False
 first = True
 controls = None
-health = 100
+hp = 100
 hunger = 100
 energy = 10
 controlkeys = ['Q', 'E']
@@ -311,11 +416,15 @@ playerinv = []
 # Configures settings
 def settings():
     global controls
-    cont = input(f"Would you like to use: {keys[0]} (W,A,S,D) or {directions[0]} (N,S,E,W)? type [d/c]")
-    if cont.lower() == "d":
-        controls = keys
-    elif cont.lower() == "c":
-        controls = directions
+    while controls is None:
+        cont = input(f"Would you like to use: {keys[0]} (W,A,S,D) or {directions[0]} (N,S,E,W)? type [d/c]")
+        if cont.lower() == "d":
+            controls = keys
+        elif cont.lower() == "c":
+            controls = directions
+        else:
+            print("invalid selection.")
+
     print(f"Controls are set to: {controls[0]}")
 
 
@@ -323,30 +432,30 @@ def settings():
 while done is False:
     if first is True:
         settings()
+        # print(len(loot_pool[0]+loot_pool[1]+loot_pool[2]+loot_pool[3]))
         print("Generating terrain...")
         time.sleep(.25)
         print("Randomizing loot...")
-        # room1 = Loot(3)
-        # room1.add(gen_loot(3, 1, any_item))
         time.sleep(.25)
         for each in room_list:
             room = int(room_list.index(each))
-            Loot(room).add(gen_loot(3, random.randint(0,3), any_item))
-            Loot(room).list()
-            print()
-
+            loot_tier = random.choices([0, 1, 2, 3], weights=[5, 4, 3, 1.5], k=1)[0]
+            Loot(room).add(gen_loot(3, loot_tier, any_item))
         print("Spawning monsters...")
         time.sleep(.25)
         print("Tending the garden...")
         time.sleep(.25)
-        print("Welcome to adventure game!")
+        print("Welcome to Dungeon Adventure [Alpha 1.4]!")
         time.sleep(.25)
         loc()
         travel(current_room, user_input("direction"))
         first = False
 
-    user_input()
 
+    user_input()
+    if len(playerinv) == len(loot_pool[0]+loot_pool[1]+loot_pool[2]+loot_pool[3]):
+        print("You win!")
+        done = True
 
 
 
