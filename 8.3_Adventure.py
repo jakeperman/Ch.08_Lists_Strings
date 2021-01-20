@@ -9,7 +9,7 @@ ADVENTURE PROGRAM
 import random
 import time
 
-
+# Creates each room
 room_list = []
 # Room parameters - ["Description", N, S, E, W]
 # 0
@@ -54,64 +54,195 @@ room_list.append(room)
 # 13
 room = ["private washroom", None, 6, None, 12]
 room_list.append(room)
-controlkeys = ['q', 'e']
-keys = ['directional keys', 'W', 'S', 'D', 'A']
-directions = ['cardinal letters/words', 'N', 'S', 'E', 'W']
 
 
-loot_pool = [[("Bent Fork", "You couldn't eat with this!"), ("Plastic Hairbrush", "It's Sticky. You run it through your hair"), 'Broken Screwdriver', 'AAA battery',
-              'Used Bandage', 'Bloody Eye-patch', 'Cracked Femur', 'Ball of Hair', 'Rubber Band',
-              'Ballpoint Pen', 'Wooden Letter Opener', 'Rotted Wooden Plank', 'Broken Mirror'], ['Swiss Army Knife', 'GameBoy Advanced', "Rusty Switchblade", 'Roll of DuctTape',
-             "8 inch Chef's Knife", "Box of Matches", '']]
-weapons = []
-loot_pool.append(weapons)
-materials = []
-loot_pool.append(materials)
-consumables = []
-loot_pool.append(consumables)
-junk = []
-loot_pool.append(junk)
+# Class for creation of items
+class Item:
+
+    def __init__(self, item_type, name, description="", damage=0, tier=0, uses=-1, effect="None"):
+        self.item_type = item_type
+        self.name = name
+        self.description = description
+        self.damage = damage
+        self.tier = tier
+        self.uses = uses
+
+    def properties(self, damage, tier, uses):
+        self.damage = damage
+        self.tier = tier
+        self.uses = uses
 
 
-def add(self, loot_type, name, description, tier = 0, damage = 1):
-    if loot_type == "weapon":
-        item = [name, description, damage, tier]
-        weapons.append(item)
-    elif loot_type == "material":
-        item = (name, description)
-        materials.append(item)
-    elif loot_type == "consumable":
-        item = (name, description, tier)
-        consumables.append(item)
-    elif loot_type == "junk":
-        item = (name, description, tier)
-        junk.append(item)
+
+class Loot:
+
+    def __init__(self, rooml):
+        self.room = rooml
+        self.loot = []
+        self.item = []
+        self.one = None
+
+    def add(self, item):
+        if type(item) == list:
+            self.item = item
+            for x in self.item:
+                self.one = self.item[self.item.index(x)]
+                self.loot.append(self.one)
+        else:
+            self.loot.append(item)
+        rooms_loot.append(self.loot)
+        room_list[self.room].append(self.loot)
+
+    def list(self):
+        for z in self.loot:
+            print(z.name)
 
 
-def edit(self, name):
-    print(loot_pool[name])
+# sets variables equal to string values of weapon types for easier access
+weapon = "weapon"
+consumable = "consumable"
+junk = "junk"
+material = "material"
+any_item = "any"
 
-def generate(self, location, tier = 'any', loot_type = 'any'):
-    print("Loot generated")
-if add == "add":
-    add_loot()
+# Creation of Junk
+hairbrush = Item(junk, "Plastic Hairbrush", "It's Sticky. You run it through your hair")
+screwdriver = Item(junk, 'Broken Screwdriver', "Now what are you gonna do with a broken screwdriver, huh?")
+battery = Item(junk, 'AAA battery', "Too bad you don't have a flashlight...")
+bandage = Item(junk, 'Used Bandage', 'It may be used, but you can still use it again!')
+eyepatch = Item(junk, 'Bloody Eyepatch', "I wonder how the blood got there...")
+femur = Item(junk, "Cracked Femur", "Finders keepers!")
+plank = Item(junk, "Rotted Wooden Plank", "Hit yourself over the head with it! Maybe this is all just a dream...")
+pen = Item(junk, "Ballpoint Pen", "Better start writing your obituary.")
+letteropen = Item(junk, "Wooden Letter Opener", "You know the mail doesnt get delivered to dungeons right?")
+rubberband = Item(junk, "Rubber Band", "Strike down your enemies!")
+hair = Item(junk, "Ball of Hair", "Did you cough that up? Gross.")
+mirror = Item(junk, "Broken Mirror", "It may be broken, but you can still see how ugly you are!")
+gameboy = Item(junk, "Gameboy Advanced", "You'll need a way to stay entertained down here!")
+soap = Item(junk, "Used Bar Of Soap", "Should you eat it...? No.")
+# add junk to list
+junks = [hair, hairbrush, screwdriver, battery, bandage, eyepatch, femur, plank, pen, letteropen, rubberband, hair,
+         mirror, gameboy]
 
-addloot = loot(add)
+# Creation of Weapons
+swiss = Item(weapon, "Swiss Army Knife", "Maybe you can use it to cut swiss cheese?", 3, 1, 5)
+switchblade = Item(weapon, "Rusty Switchblade", "Better hope you have your tetanus vaccine...", 2, 0, 3)
+chefknife = Item(weapon, "Dull Chef's Knife", "Maybe you should prepare a meal before you become one.", 3.5)
+machette = Item(weapon, "16 inch Machete", "Too bad you arent trapped in a jungle!", 5, 2, 8)
+pencil = Item(weapon, "#2 Pencil", "Sharper than your wits!", 1, 0, 1)
+fork = Item(weapon, "Bent Fork", "Try and bend it back, then you'll just have a fork", 1, 0)
+nail = Item(weapon, "6 inch Iron Nail", "Quick! Drive it through your skull and end the harsh reality that is your life!")
+woodenstake = Item(weapon, "Wooden Stake", "You can protect yourself from vampires!")
+# add weapons to list
+weapons = [swiss, switchblade, chefknife, machette, pencil, fork, nail, woodenstake]
+
+# Materials
+nails = Item(material, "Box of Nails", "Maybe you can build something...")
+matches = Item(material, "Soggy Box of Matches", "Better hope they still work...")
+stones = Item(material, "Pile of Stones", "This could be used for something!")
+gauze = Item(material, "Fresh Gauze", "I have a feeling you'll be needing this...")
+rope = Item(material, "Knotted Rope", "Undo the knots and you can make a noose!")
+hammer = Item(material, "Small Hammer", "Are you strong enough to lift that?")
+# add materials to list
+materials = [nails, matches, stones]
+
+# Consumables
+cheese = Item(consumable, "Swiss Cheese", "It's got holes in it!")
+flesh = Item(consumable, "Rotten Flesh", "Wait, this isn't minecraft!")
+apple = Item(consumable, "Bruised Apple", "Watch your back, before you get bruised too...")
+mouse = Item(consumable, "Mutilated Mouse", "Not very appetizing... yet.")
+bread = Item(consumable, "Stale loaf of Bread", "This could do some damage... Or you could eat it")
+medicine = Item(consumable, "Mysterious Bottle Of Medicine", "At least you have a painless way out...")
+# add consumables to list
+consumables = [cheese, flesh, apple, mouse, bread, medicine]
+item_types = ["consumable", "material", "junk", "weapon"]
+# add all items to loot pool
+loot_pool = [consumables, materials, junks, weapons]
+rooms_loot = []
 
 
+# loot generation
+def gen_loot(count, tier, itemtype):
+    nums = [0, 1, 2, 3]
+    # if item generation is set to any, run random generation
+    if itemtype == "any":
+        # different odds for each tier of loot, 0 is the worst, 3 is the highest
+        # mostly junk, some consumables and materials, no weapons
+        if tier == 0:
+            index = random.choices(nums, weights=[2, 2, 6, 0], k=count)
+            room_loot = random.choices(loot_pool[index[0]], k=count)
+        # even amount of consumables, materials, and weapons, but mostly junk
+        elif tier == 1:
+            index = random.choices(nums, weights=[2, 2, 5, 2], k=count)
+            room_loot = random.choices(loot_pool[index[0]], k=count)
+        # even amount of all items
+        elif tier == 2:
+            index = random.choices(nums, weights=[3, 3, 3, 3], k=count)
+            room_loot = random.choices(loot_pool[index[0]], k=count)
+        # almost no junk, mostly weapons and materials, some consumables
+        elif tier == 3:
+            index = random.choices(nums, weights=[3, 4, 1, 5], k=count)
+            room_loot = random.choices(loot_pool[index[0]], k=count)
+    # if loot type is specified, pick random items from that item's loot pool
+    elif itemtype in item_types:
+        room_loot = random.choices(loot_pool[item_types.index(itemtype)], k=count)
+    else:
+        print("No items generated")
+    # add loot data to the room
+    rooms_loot.append(room_loot)
+
+    return room_loot
+
+
+# probability simulation for loot generation
+def probsim(tier, runs, ipr=1):
+    junkcount = 0
+    weaponcount = 0
+    materialcount = 0
+    consumablecount = 0
+
+    for x in range(0, runs):
+        loot = gen_loot(ipr, tier, any_item)
+        for i in range(0, len(loot)):
+            if loot[i].item_type == junk:
+                junkcount += 1
+            elif loot[i].item_type == weapon:
+                weaponcount += 1
+            elif loot[i].item_type == material:
+                materialcount += 1
+            elif loot[i].item_type == consumable:
+                consumablecount += 1
+
+    print(f"Junk: {junkcount}\n weapons: {weaponcount}\n consumable: {consumablecount}\n material: {materialcount}")
+
+
+dev = False
+if dev is True:
+    print("\ntier 0")
+    probsim(0, 100)
+    print("\ntier 1")
+    probsim(1, 100)
+    print("\ntier 2")
+    probsim(2, 100)
+    print("\ntier 3")
+    probsim(3, 100)
+
+
+# sets up enemies
 def enemies():
     def add_enemy():
+        print("hey")
 
-    def
 
-
+# sets up health system
 def health():
     global health
+
     def damage(amount):
         health -= amount
+
     def regen(amount):
         health += amount
-
 
 
 # Prints location of player
@@ -120,24 +251,30 @@ def loc():
     print(f"You are in the {playerpos[0]}")
 
 
+def open_inv():
+    print("Your inventory contains:")
+    for z in playerinv:
+        print(z.name)
+
+
 # Takes various forms of user input
-def userinput(inp_type):
+def user_input(userinput="none"):
     inp = None
     while inp is None:
-        if inp_type == "direction":
-            direct = input(f"Please enter a direction: {directions}").upper()
-            if direct[0] in controls[1:5]:
-                inp = direct[0]
+        if userinput == "none":
+            cmd = input(f"Please enter a command:").upper()
+            if cmd.upper()[0] in controls[1:5]:
+                inp = cmd[0]
+                travel(current_room, inp)
+            elif cmd.upper()[0] in controlkeys:
+                open_inv()
             else:
-                print(f"Invalid Direction")
+                print(f"Invalid Command. Valid Commands: {controls + controlkeys}")
                 continue
-        elif inp_type == "action":
-            act = input("Please select an action.")
-            inp = act
-        elif inp_type == "inventory":
-            inv = input("")
-            inp = inv
-    return inp
+        elif userinput == "direction":
+            direct = input("Please input a direction:").upper()
+            inp = direct[0]
+        return inp
 
 
 # Allows the player to travel to different rooms
@@ -156,8 +293,6 @@ def travel(current, direction):
             print("You cant go that direction.")
 
 
-
-
 # spawn player, set starting variables
 current_room = 0
 last_room = 0
@@ -167,31 +302,50 @@ controls = None
 health = 100
 hunger = 100
 energy = 10
+controlkeys = ['Q', 'E']
+keys = ['directional keys', 'W', 'S', 'D', 'A']
+directions = ['cardinal letters/words', 'N', 'S', 'E', 'W']
+playerinv = []
+
 
 # Configures settings
 def settings():
     global controls
-    print(f"Controls are set to: {controls[0]}")
-    cont = input(f"Would you like to use: {keys[0]} [k] or {directions[0]} [d].")
-    if cont.lower() == "k":
+    cont = input(f"Would you like to use: {keys[0]} (W,A,S,D) or {directions[0]} (N,S,E,W)? type [d/c]")
+    if cont.lower() == "d":
         controls = keys
-    elif cont.lower() == "d":
+    elif cont.lower() == "c":
         controls = directions
+    print(f"Controls are set to: {controls[0]}")
 
 
 # main game loop
 while done is False:
     if first is True:
+        settings()
         print("Generating terrain...")
+        time.sleep(.25)
         print("Randomizing loot...")
+        # room1 = Loot(3)
+        # room1.add(gen_loot(3, 1, any_item))
+        time.sleep(.25)
+        for each in room_list:
+            room = int(room_list.index(each))
+            Loot(room).add(gen_loot(3, random.randint(0,3), any_item))
+            Loot(room).list()
+            print()
+
         print("Spawning monsters...")
-        print("Planting a garden...")
+        time.sleep(.25)
+        print("Tending the garden...")
+        time.sleep(.25)
         print("Welcome to adventure game!")
+        time.sleep(.25)
         loc()
+        travel(current_room, user_input("direction"))
         first = False
 
-    travel(current_room, userinput("direction"))
-    print(current_room)
+    user_input()
 
 
 
