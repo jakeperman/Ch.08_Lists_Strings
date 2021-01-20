@@ -6,8 +6,10 @@ ADVENTURE PROGRAM
 3.) Expand your program to make it a real adventure game
 
 '''
+import random
+import time
 
-import getch
+
 room_list = []
 # Room parameters - ["Description", N, S, E, W]
 # 0
@@ -57,6 +59,60 @@ keys = ['directional keys', 'W', 'S', 'D', 'A']
 directions = ['cardinal letters/words', 'N', 'S', 'E', 'W']
 
 
+loot_pool = [[("Bent Fork", "You couldn't eat with this!"), ("Plastic Hairbrush", "It's Sticky. You run it through your hair"), 'Broken Screwdriver', 'AAA battery',
+              'Used Bandage', 'Bloody Eye-patch', 'Cracked Femur', 'Ball of Hair', 'Rubber Band',
+              'Ballpoint Pen', 'Wooden Letter Opener', 'Rotted Wooden Plank', 'Broken Mirror'], ['Swiss Army Knife', 'GameBoy Advanced', "Rusty Switchblade", 'Roll of DuctTape',
+             "8 inch Chef's Knife", "Box of Matches", '']]
+weapons = []
+loot_pool.append(weapons)
+materials = []
+loot_pool.append(materials)
+consumables = []
+loot_pool.append(consumables)
+junk = []
+loot_pool.append(junk)
+
+
+def add(self, loot_type, name, description, tier = 0, damage = 1):
+    if loot_type == "weapon":
+        item = [name, description, damage, tier]
+        weapons.append(item)
+    elif loot_type == "material":
+        item = (name, description)
+        materials.append(item)
+    elif loot_type == "consumable":
+        item = (name, description, tier)
+        consumables.append(item)
+    elif loot_type == "junk":
+        item = (name, description, tier)
+        junk.append(item)
+
+
+def edit(self, name):
+    print(loot_pool[name])
+
+def generate(self, location, tier = 'any', loot_type = 'any'):
+    print("Loot generated")
+if add == "add":
+    add_loot()
+
+addloot = loot(add)
+
+
+def enemies():
+    def add_enemy():
+
+    def
+
+
+def health():
+    global health
+    def damage(amount):
+        health -= amount
+    def regen(amount):
+        health += amount
+
+
 
 # Prints location of player
 def loc():
@@ -100,16 +156,21 @@ def travel(current, direction):
             print("You cant go that direction.")
 
 
+
+
 # spawn player, set starting variables
 current_room = 0
 last_room = 0
 done = False
 first = True
-controls = directions
+controls = None
+health = 100
+hunger = 100
+energy = 10
 
-settings = False
-if settings is False:
-    controls
+# Configures settings
+def settings():
+    global controls
     print(f"Controls are set to: {controls[0]}")
     cont = input(f"Would you like to use: {keys[0]} [k] or {directions[0]} [d].")
     if cont.lower() == "k":
@@ -117,15 +178,21 @@ if settings is False:
     elif cont.lower() == "d":
         controls = directions
 
-    settings = True
 
+# main game loop
+while done is False:
     if first is True:
+        print("Generating terrain...")
+        print("Randomizing loot...")
+        print("Spawning monsters...")
+        print("Planting a garden...")
         print("Welcome to adventure game!")
         loc()
         first = False
 
     travel(current_room, userinput("direction"))
     print(current_room)
+
 
 
 
