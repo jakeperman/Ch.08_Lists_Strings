@@ -61,9 +61,10 @@ room_list.append(room)
 
 class Creature:
 
-    def __init__(self, kind, name="", description="", cont=""):
+    def __init__(self, kind, mob_hp, name="", description="", cont=""):
         self.name = name
         self.description = description
+        self.hp = mob_hp
         self.kind = kind
         self.cont = cont
         self.list = []
@@ -126,6 +127,8 @@ consumable = "consumable"
 junk = "junk"
 material = "material"
 any_item = "any"
+hostile = "hostile"
+passive = "passive"
 
 # Creation of Junk
 hairbrush = Item(junk, "Plastic Hairbrush", "It's Sticky. You run it through your hair")
@@ -292,11 +295,19 @@ def dev(inp):
             i = input("How many items per run?")
             probsim(t, r, i)
 
+jumbo_rat = Creature(hostile, "Jumbo Rat", "A Jumbo Rat Appears! He looms over you, waiting to strike...", 5)
+miniature_dragon = Creature(hostile, "Miniature Dragon", "A miniature dragon leaps out of the shadows! Me may be small, but he still breathes fire!", 14)
+abraham = Creature(hostile, "Abraham Lincoln", "Abraham Lincoln jump down from the ceiling! He think's you're a slave trader!", 10)
+hermon = Creature(hostile, "Mr. Hermon", "Mr. Hermon crawls out from the corner! Quick, solve his boom/chain problem before he sucks out your brains!", -1)
+joe = Creature(hostile, "Joe", "Joe materializes out of thin air! Wait, that's not very threatening! He gives you a bag of almonds", -1)
+monk = Creature(hostile, "Decrepid Monk", "A decrepid monk appears! He tries to shave your head.", 15)
+luke = Creature(hostile, "Luke Skywalker", "Luke skywalker sprints into the corridor. His light saber hums at his side, ready to slice off your philanges", 20)
 
-# sets up enemies
-def enemies():
-    def add_enemy():
-        print("hey")
+monsters = [jumbo_rat, miniature_dragon, abraham, hermon, joe, monk, luke]
+# spawn an enemy
+def enemy():
+    mob = random.choice(monsters)
+    room_list[current_room].append(mob)
 
 
 # sets up health system
@@ -306,10 +317,11 @@ def health(regen=0, damage=0):
     hp += regen
 
 
-animals = ["Feral Rabbit", "Decrepid Racoon", "Flea Infested Squirrel", "Jumbotron", "Large sewer rat",
+# transformations
+shapes = ["Feral Rabbit", "Decrepid Racoon", "Flea Infested Squirrel", "Jumbotron", "Large sewer rat",
            "French Baguette", "Piece of Sidewalk Chalk", "Headless Pigeon", "Piece of Sandpaper"]
-animal = Creature("good")
-animal.create(animals)
+shape = Creature(passive, -1)
+shape.create(shapes)
 
 
 def consume(item):
