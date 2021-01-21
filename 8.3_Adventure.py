@@ -61,12 +61,11 @@ room_list.append(room)
 
 class Creature:
 
-    def __init__(self, kind, mob_hp, name="", description="", cont=""):
+    def __init__(self, kind, name="", description="", mob_hp=-1):
         self.name = name
         self.description = description
         self.hp = mob_hp
         self.kind = kind
-        self.cont = cont
         self.list = []
         self.value = None
 
@@ -187,6 +186,18 @@ item_types = ["consumable", "material", "junk", "weapon"]
 loot_pool = [consumables, materials, junks, weapons]
 rooms_loot = []
 
+jumbo_rat = Creature(hostile, "Jumbo Rat", "A Jumbo Rat Appears! He looms over you, waiting to strike...", 5)
+miniature_dragon = Creature(hostile, "Miniature Dragon", "A miniature dragon leaps out of the shadows! Me may be small, but he still breathes fire!", 14)
+abraham = Creature(hostile, "Abraham Lincoln", "Abraham Lincoln jump down from the ceiling! He think's you're a slave trader!", 10)
+hermon = Creature(hostile, "Mr. Hermon", "Mr. Hermon crawls out from the corner! Quick, solve his boom/chain problem before he sucks out your brains!", -1)
+joe = Creature(hostile, "Joe", "Joe materializes out of thin air! Wait, that's not very threatening! He gives you a bag of almonds", -1)
+monk = Creature(hostile, "Decrepid Monk", "A decrepid monk appears! He tries to shave your head.", 15)
+luke = Creature(hostile, "Luke Skywalker", "Luke skywalker sprints into the corridor. His light saber hums at his side, ready to slice off your philanges", 20)
+
+monsters = [jumbo_rat, miniature_dragon, abraham, hermon, joe, monk, luke]
+
+removed = False
+
 
 # loot generation
 def gen_loot(count, tier, itemtype):
@@ -245,18 +256,20 @@ def probsim(tier, runs, ipr=1):
 
 
 def dev(inp):
-    if inp == "1":
+    global removed
+    if inp == "/list":
         for rooms in room_list:
             print(f"\n{room_list[room_list.index(rooms)][0].upper()}:")
             for those in room_list[room_list.index(rooms)][5]:
                 print(those.name)
-    elif inp == "2":
-        kind = input("\n1) tier sim\n 2) loot sim\n 3) tier + loot sim")
-        if kind == "1":
+    elif inp == "/sim":
+        sim = inp.split("m ")
+        # kind = input("\n1) tier sim\n 2) loot sim\n 3) tier + loot sim")
+        if sim == "tier":
             for i in range(0, 14):
                 tier = random.choices([0, 1, 2, 3], weights=[5, 4, 3, 1.5], k=1)[0]
                 print(tier)
-        elif kind == "2":
+        elif sim == "loot":
             a = input("Run Auto Sim? [y/n]")
             if a.upper() == "Y":
                 print("\ntier 0")
@@ -267,46 +280,51 @@ def dev(inp):
                 probsim(2, 100)
                 print("\ntier 3")
                 probsim(3, 100)
-        elif kind == "3":
+            elif a.upper() == "N":
+                t = input("What tier loot?")
+                r = input("How many runs?")
+                i = input("How many items per run?")
+                probsim(t, r, i)
+        else:
             for them in room_list:
                 thetier = random.choices([0, 1, 2, 3], weights=[5, 4, 3, 1.5], k=1)[0]
                 test = []
                 it = gen_loot(3, thetier, any_item)
                 test.append(it)
-        elif kind == "4":
-            removed = False
-            for they in room_list:
-                for it in they[5]:
-                    print(it)
-                    print(f"Removing: {it.name}")
-                    room_list[room_list.index(they)][5].remove(it)
-                    print(f"From: {room_list[room_list.index(they)]} ")
-                    # room_list[room_list.index(they)][5].remove(it)
-            removed = True
-            if removed is True:
-                for that in room_list:
-                    roomm = int(room_list.index(that))
-                    loottier = random.choices([0, 1, 2, 3], weights=[5, 4, 3, 1.5], k=1)[0]
-                    Loot(roomm).add(gen_loot(3, loottier, any_item))
-                    print("done")
-        else:
-            t = input("What tier loot?")
-            r = input("How many runs?")
-            i = input("How many items per run?")
-            probsim(t, r, i)
+    elif inp == "/clear":
+        for rooms in room_list:
+            print(f"Clearing rooms... {round((room_list.index(rooms)/len(room_list))*100)}%")
+            removal = rooms[5]
+            room_list[room_list.index(rooms)].remove(removal)
+            # for loots in range(0, len(rooms[5])):
+            #     room_list[room_list.index(rooms)][5]
+        print("Done!")
+        removed = True
+    elif inp == "/gen" and removed is True:
+        for that in room_list:
+            roomm = int(room_list.index(that))
+            loottier = random.choices([0, 1, 2, 3], weights=[5, 4, 3, 1.5], k=1)[0]
+            Loot(roomm).add(gen_loot(3, loottier, any_item))
+            print("done")
+    elif inp == "/reset":
+        print("Clearing rooms...")
+        for rooms in room_list:
+            # print(f"Clearing rooms... {round((room_list.index(rooms)/len(room_list))*100)}%")
+            removal = rooms[5]
+            room_list[room_list.index(rooms)].remove(removal)
+        print("Regenerating Loot...")
+        for that in room_list:
+            roomm = int(room_list.index(that))
+            loottier = random.choices([0, 1, 2, 3], weights=[5, 4, 3, 1.5], k=1)[0]
+            Loot(roomm).add(gen_loot(3, loottier, any_item))
+        print("Done.")
 
-jumbo_rat = Creature(hostile, "Jumbo Rat", "A Jumbo Rat Appears! He looms over you, waiting to strike...", 5)
-miniature_dragon = Creature(hostile, "Miniature Dragon", "A miniature dragon leaps out of the shadows! Me may be small, but he still breathes fire!", 14)
-abraham = Creature(hostile, "Abraham Lincoln", "Abraham Lincoln jump down from the ceiling! He think's you're a slave trader!", 10)
-hermon = Creature(hostile, "Mr. Hermon", "Mr. Hermon crawls out from the corner! Quick, solve his boom/chain problem before he sucks out your brains!", -1)
-joe = Creature(hostile, "Joe", "Joe materializes out of thin air! Wait, that's not very threatening! He gives you a bag of almonds", -1)
-monk = Creature(hostile, "Decrepid Monk", "A decrepid monk appears! He tries to shave your head.", 15)
-luke = Creature(hostile, "Luke Skywalker", "Luke skywalker sprints into the corridor. His light saber hums at his side, ready to slice off your philanges", 20)
 
-monsters = [jumbo_rat, miniature_dragon, abraham, hermon, joe, monk, luke]
+
 # spawn an enemy
 def enemy():
-    mob = random.choice(monsters)
+    mob = random.choice(monsters).name
+    print(mob)
     room_list[current_room].append(mob)
 
 
@@ -332,7 +350,7 @@ def consume(item):
     elif effect == 1:
         print("you aight")
     elif effect == 2:
-        anim = random.choice(animals)
+        anim = random.choice(shape)
         print("Thought you'd get out of here that easily, huh?")
         print(f"You turned into a {anim}")
     elif effect == -1:
@@ -366,7 +384,7 @@ def user_input(userinput="none"):
     inp = None
     while inp is None:
         if userinput == "none":
-            cmd = input(f"Please enter a command:").upper()
+            cmd = input(f"Please enter a command:")
             if cmd.upper()[0] in controls[1:5]:
                 inp = cmd[0]
                 travel(current_room, inp)
@@ -378,16 +396,19 @@ def user_input(userinput="none"):
                 inp = "dev"
             elif cmd.upper()[0] == "Q":
                 search()
+            elif cmd[0] == "/" and dev_mode is True:
+                print(cmd)
+                dev(cmd)
             else:
                 print(f"Invalid Command. Valid Commands: {controls + controlkeys}")
                 continue
         elif userinput == "direction":
             direct = input("Please input a direction:").upper()
             inp = direct[0]
-        elif userinput == "dev":
-            devinp = input("1) list items in each room.\n2) probability simulation.")
-            dev(devinp)
-            inp = "dev"
+        # elif userinput == "dev":
+        #     devinp = input("1) list items in each room.\n2) probability simulation.")
+        #     dev(devinp)
+        #     inp = "dev"
         else:
             print("Invalid Command")
             continue
@@ -423,6 +444,7 @@ controlkeys = ['Q', 'E']
 keys = ['directional keys', 'W', 'S', 'D', 'A']
 directions = ['cardinal letters/words', 'N', 'S', 'E', 'W']
 playerinv = []
+dev_mode = True
 
 
 # Configures settings
@@ -462,8 +484,6 @@ while done is False:
         loc()
         travel(current_room, user_input("direction"))
         first = False
-
-
     user_input()
     if len(playerinv) == len(loot_pool[0]+loot_pool[1]+loot_pool[2]+loot_pool[3]):
         print("You win!")
