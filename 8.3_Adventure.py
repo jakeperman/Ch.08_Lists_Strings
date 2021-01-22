@@ -214,12 +214,14 @@ class Consumable(Item):
         self.item_type = consumable
         self.saturation = saturation
         self.effect = effect
+        self.damage = 0
         super(Consumable, self).__init__(name, desc)
 
 
 class Junk(Item):
     def __init__(self, name, desc):
         self.item_type = junk
+        self.damage = 0
         super(Junk, self).__init__(name, desc)
 
 
@@ -227,6 +229,7 @@ class Material(Item):
     def __init__(self, name, desc, craftable="no"):
         self.item_type = material
         self.craftable = craftable
+        self.damage = 0
         super(Material, self).__init__(name, desc)
 
 
@@ -253,6 +256,7 @@ class Loot:
     def list(self):
         for z in self.loot:
             print(z.name)
+
 
 # Creation of object instances
 
@@ -300,13 +304,13 @@ bhammer = Material("Big Hammer", "Who are you, Bob the Builder?")
 materials = [nails, matches, stones, gauze, rope, hammer, bhammer]
 
 # Consumables
-cheese = Consumable("Swiss Cheese", "It's got holes in it!", effect=0)
-flesh = Consumable("Rotten Flesh", "Wait, this isn't minecraft!", effect=1)
-apple = Consumable("Bruised Apple", "Watch your back, before you get bruised too...", effect=0)
-mouse = Consumable("Mutilated Mouse", "Not very appetizing... yet.", effect=0)
-bread = Consumable("Stale loaf of Bread", "This could do some damage... Or you could eat it", effect=0)
-medicine = Consumable("Mysterious Bottle Of Medicine", "At least you have a painless way out...", effect=2)
-ratpoison = Consumable("Rat Poison", "You shouldn't eat this... Should you?", effect=1)
+cheese = Consumable("Swiss Cheese", "It's got holes in it!", 1, effect=0)
+flesh = Consumable("Rotten Flesh", "Wait, this isn't minecraft!", 3, effect=1)
+apple = Consumable("Bruised Apple", "Watch your back, before you get bruised too...", 1.5, effect=0)
+mouse = Consumable("Mutilated Mouse", "Not very appetizing... yet.", 4, effect=0)
+bread = Consumable("Stale loaf of Bread", "This could do some damage... Or you could eat it", 2.5, effect=0)
+medicine = Consumable("Mysterious Bottle Of Medicine", "At least you have a painless way out...", 0, effect=2)
+ratpoison = Consumable("Rat Poison", "You shouldn't eat this... Should you?", 0, effect=1)
 # add consumables to list
 consumables = [cheese, flesh, apple, mouse, bread, medicine]
 item_types = ["consumable", "material", "junk", "weapon"]
@@ -328,17 +332,41 @@ removed = False
 
 # transformations
 shapes = ["Feral Rabbit", "Decrepid Racoon", "Flea Infested Squirrel", "Jumbotron", "Large sewer rat",
-           "French Baguette", "Piece of Sidewalk Chalk", "Headless Pigeon", "Piece of Sandpaper"]
+          "French Baguette", "Piece of Sidewalk Chalk", "Headless Pigeon", "Piece of Sandpaper"]
 shape = Creature(passive, -1)
 shape.create(shapes)
+room_monsters = []
 
 
 # Spawning and generation
 def enemy():
-    mob = random.choice(monsters).name
-    print(mob)
-    room_list[current_room].append(mob)
-
+    global done
+    mob = random.choice(monsters)
+    # print(mob.name)
+    # room_monsters.insert(current_room, mob)
+    print(mob.description)
+    action = int(input("What will you do? Fight [1] Run [2] Sit [3]"))
+    if action == 1:
+        open_inv()
+        choice = int(input("Select an item to use in battle!"))
+        item = playerinv[choice-1]
+        if (item.damage * 3) > mob.hp:
+            print(f"You beat {mob.name}!")
+    elif action == 2:
+        x = random.randint(0, 1)
+        if x == 0:
+            input(f"Which way will you run? {controls[1:]}")
+            print(f"{mob.name} Killed you.")
+            done = True
+        elif x == 1:
+            travel(current_room, user_input("direction", f"Which way will you run? {controls[1:]}"))
+            print(f"You successfully escaped {mob.name}!")
+    elif action == 3:
+        action = input("What style of sitting would you like to partake in?")
+        print("You died")
+        done = True
+    else:
+        print("That wasnt a valid option")
 
 def gen_loot(count, tier, itemtype):
     nums = [0, 1, 2, 3]
@@ -366,6 +394,7 @@ def gen_loot(count, tier, itemtype):
         room_loot = random.choices(loot_pool[item_types.index(itemtype)], k=count)
     else:
         print("No items generated")
+        room_loot = "none"
     # add loot data to the room
     rooms_loot.append(room_loot)
 
@@ -377,8 +406,10 @@ def gen_loot(count, tier, itemtype):
 # opens payer inventory
 def open_inv():
     print("Your inventory contains:")
+    i = 1
     for z in playerinv:
-        print(z.name)
+        print(f"{i}) {z.name} [{z.item_type}]")
+        i +=1
 
 
 # searches the room for loot
@@ -404,6 +435,8 @@ def travel(current, direction):
             last_room = current_room
             current_room = next_room
             loc()
+            if random.randint(0, 2) == 1:
+                enemy()
         else:
             print("You cant go that direction.")
 
@@ -458,7 +491,7 @@ def loc():
 
 
 # Takes various forms of user input
-def user_input(userinput="none"):
+def user_input(userinput="none", prompt="default"):
     inp = None
     while inp is None:
         if userinput == "none":
@@ -481,7 +514,9 @@ def user_input(userinput="none"):
                 print(f"Invalid Command. Valid Commands: {controls + controlkeys}")
                 continue
         elif userinput == "direction":
-            direct = input("Please input a direction:").upper()
+            if prompt == "default":
+                prompt = "Please input a direction:"
+            direct = input(prompt).upper()
             inp = direct[0]
         # elif userinput == "dev":
         #     devinp = input("1) list items in each room.\n2) probability simulation.")
@@ -541,5 +576,5 @@ while done is False:
         print("You win!")
         done = True
 
-
+print("Game Over.")
 
