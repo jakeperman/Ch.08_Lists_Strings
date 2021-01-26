@@ -361,7 +361,7 @@ class Player:
         self.stamina = stamina
         self.inv = inv
         self.pos = pos
-        self.room = room_list[self.pos]
+        self.room = rooms[self.pos]
         self.item = None
         self.food = None
         self.throw = None
@@ -371,6 +371,8 @@ class Player:
     def damage(self, damage):
         global done
         global fight
+        global escmsg
+        global fight_msg
         self.hp -= damage
         if self.hp <= 0:
             fight = False
@@ -382,7 +384,7 @@ class Player:
             elif 2 < damage <= 4:
                 amount = color.bright_red + "some"
             elif damage >= 5:
-                amount = color.red + color.bold + "a lot" + color.reset + color.yellow + "of"
+                amount = color.red + color.bold + "a lot" + color.reset + color.yellow + " of"
             print(color.yellow + f"You took {amount + color.reset + color.yellow} damage!")
             print(color.yellow + f"Your hp is: {color.bright_red}{self.hp}")
 
@@ -399,12 +401,14 @@ class Player:
 
     def collect(self, item):
         self.inv.append(item)
-        self.msgs = [f"You pick up the {item.name}", f"You collect the {item.name}"]
-        if item.name[0].lower() in ['a','e','i','o','u']:
+        msgs = [f"You pick up the {item.name}", f"You collect the {item.name}"]
+        if item.name[0].lower() in ['a', 'e', 'i', 'o', 'u']:
             print(color.yellow + f"You found an {color.bright_green + item.name}. {color.reset + color.yellow + item.description}")
         else:
             print(color.yellow + f"You found a {color.bold_blue + item.name}. {color.reset + color.yellow + item.description}")
-        player.room[5].remove(item)
+        if self.room == stairwell:
+            print(color.magenta + "*you place it in your satchel*")
+        player.room.del_loot(item)
         # print(random.choice(self.msgs))
 
     def consume(self, item):
@@ -425,19 +429,66 @@ class Player:
 
 
 class Room:
-    def __init__(self, name, desc, rooms=('n', 's', 'e', 'w')):
-        self.name = name
-        self.desc = desc
-        self.north = rooms[0]
-        self.south = rooms[1]
-        self.east = rooms[2]
-        self.west = rooms[3]
-        self.loot = []
+    def __init__(self, room, desc=""):
+        self.num = room
+        self.name = room_list[room][0]
+        self.description = desc
+        self.north = room_list[room][1]
+        self.south = room_list[room][2]
+        self.east = room_list[room][3]
+        self.west = room_list[room][4]
+        self.rooms = [self.north, self.south, self.east, self.west]
         self.monsters = []
+        self.loot = []
         self.first = True
+        room_list[self.num].insert(5, [])
+
+    def add_loot(self, item):
+        # if multiple items specified, add them to list using this method
+        items = []
+        if isinstance(item, list):
+            for x in item:
+                items.append(x)
+        else:
+            items.append(item)
+        for those in items:
+            # add each item to the loot index [5] of the room
+            room_list[self.num][5].append(those)
+            self.loot.append(those)
+
+    def del_loot(self, item):
+        # if multiple items specified, remove them from the list using this method
+        items = []
+        if isinstance(item, list):
+            for x in item:
+                items.append(x)
+        else:
+            items.append(item)
+        for them in items:
+            # remove each item from the loot of the room
+            room_list[self.num][5].remove(them)
+            self.loot.remove(them)
+
+    def spawn_mob(self, creature="any"):
+        print("mob")
 
 
-
+stairwell = Room(0)
+washroom = Room(1)
+torture = Room(2)
+main_corridor = Room(3)
+east_corridor = Room(4)
+closet = Room(5)
+keepers_quarters = Room(6)
+west_corridor = Room(7)
+kitchen = Room(8)
+prisoners_quarters = Room(9)
+prison_passage = Room(10)
+keepers_passage = Room(11)
+keepers_hall = Room(12)
+private_washroom = Room(13)
+rooms = [stairwell, washroom, torture, main_corridor, east_corridor, closet, keepers_quarters, west_corridor, kitchen, prisoners_quarters, prison_passage,
+         keepers_passage, keepers_hall, private_washroom]
 
 # Creation of object instances
 
@@ -512,9 +563,9 @@ jumbo_rat = Creature(hostile, "Jumbo Rat", "A Jumbo Rat Appears! He looms over y
 miniature_dragon = Creature(hostile, "Miniature Dragon", "A Miniature Dragon leaps out of the shadows! Me may be small, but he still breathes fire!", 14, 4)
 abraham = Creature(hostile, "Abraham Lincoln", "Abraham Lincoln jumps down from the ceiling! He think's you're a slave trader!", 10, 3)
 hermon = Creature(hostile, "Mr. Hermon", "Mr. Hermon crawls out from the corner! Quick, solve his boom/chain problem before he sucks out your brains!", 2, 5)
-joe = Creature(hostile, "Joe", "Joe materializes out of thin air! Wait, that's not very threatening! He gives you a bag of almonds", 6, 2.25)
-monk = Creature(hostile, "Decrepid Monk", "A Decrepid Monk appears! He tries to shave your head.", 15, .8)
-luke = Creature(hostile, "Luke Skywalker", "Luke skywalker sprints into the corridor. His light saber hums at his side, ready to slice off your philanges", 20, .7)
+joe = Creature(hostile, "Joe", "Joe materializes out of thin air! Wait, that's not very threatening! He gives you a bag of almonds", 6, 3)
+monk = Creature(hostile, "Decrepid Monk", "A Decrepid Monk appears! He tries to shave your head.", 15, 4)
+luke = Creature(hostile, "Luke Skywalker", "Luke skywalker sprints into the corridor. His light saber hums at his side, ready to slice off your philanges", 20, 5)
 # add monsters to pool
 monsters = [jumbo_rat, miniature_dragon, abraham, hermon, joe, monk, luke]
 
@@ -526,32 +577,43 @@ shapes = ["Feral Rabbit", "Decrepid Racoon", "Flea Infested Squirrel", "Jumbotro
 shape = Creature(passive)
 shape.create(shapes)
 room_monsters = []
-last_encounter = ""
-last_move = ""
-fight = False
 
 
 def craft(item1, item2):
+    print("crafted")
 
 
-
+fight = False
+last_encounter = ""
+escmsg = ""
+action = 0
+fight_msg = ""
+attackmsg = ""
 
 # Spawning and generation
 def enemy():
     global done
-    global last_move
-    global last_encounter
     global fight
+    global last_encounter
+    global escmsg
+    global action
+    global fight_msg
+    global attackmsg
+    last_item = ""
+    last_move = 0
     mob = random.choice(monsters)
     fight = True
-    border
     # if the player successfully runs from a monster, only to encounter it again immediately after, run this statement
     if last_encounter == mob and last_move == 2:
+        border(45)
         print(color.red + f"{last_encounter.name + color.yellow} has followed you to the {color.blue + room_list[current_room][0] + color.yellow}. You may have escaped their clutches before, "
               f"but will you be so lucky again?")
+        border(45)
     # if the user kills a monster but encounters it again, run this statement
     elif last_encounter == mob and last_move == 1:
+        border(45)
         print(color.red + f"{last_encounter.name + color.yellow} has risen from the dead! Now even stronger, and with a thirst for vengeance!")
+        border(45)
     # run the normal message if not a special encounter
     else:
         if mob.description[0] == mob.name[0]:
@@ -565,22 +627,32 @@ def enemy():
     # continue the fighting loop until fight is set to false. either by the monster defeating you, it being defeated
     while fight is True:
         # give user 3 actions to take upon encountering monster
-        action = user_input("custom", "What will you do? Fight [1] Run [2] Chat [3]", [1, 2, 3])
+        opt = ['F', 'R', 'C', 'L']
+        act = user_input("custom", "What will you do? [F]ight [R]un [C]hat [L]ast Action", opt)
+        actions = [1, 2, 3, 4]
+        action = actions[opt.index(act)]
         # first action is to fight, user can choose eligible item from inventory to attack with
-        if action == 1:
+        if action == 1 or action == 4 and last_move == 1:
             if player.inv:
-                open_inv()
+                if action != 4:
+                    open_inv()
                 # choice = int(user_input("custom", "Select an item to use in battle!", range(0, len(playerinv)+1)))
-                item = player.inv[user_input("custom", "Select an item to use in battle!", range(0, len(player.inv)+1))-1]
+                if action == 4 and last_item != "":
+                    item = last_item
+                else:
+                    item = player.inv[user_input("custom", "Select an item to use in battle!", range(0, len(player.inv)+1))-1]
+                    last_item = item
                 # some weapons can kill a mob in one hit
-                attackmsg = color.yellow + f"You attacked the {color.bright_red + mob.name + color.reset + color.yellow} with your {color.blue + item.name + color.reset}"
+                attackmsg = color.yellow + f"You attacked the {color.reset + color.bright_red + mob.name + color.reset + color.yellow} with your {color.blue + color.bold + item.name + color.reset}"
+                border(attackmsg, color.yellow + color.bold)
                 print(attackmsg)
                 border(attackmsg, color.red)
+                time.sleep(.25)
                 if item.damage >= mob.hp:
-                    print(color.yellow + "You beat {color.bright_red + mob.name}!")
+                    print(color.yellow + f"You beat {color.bright_red + mob.name}!")
                     if isinstance(item, Weapon):
                         item.uses -= 1
-                    print(color.red + f"{item.uses} {color.yellow} uses left on your {color.blue + item.name}")
+                    print(color.red + f"{item.uses}{color.yellow} uses left on your {color.blue + color.bold + item.name}")
                     fight = False
                 # if the player still has health, damage the monster
                 else:
@@ -599,23 +671,25 @@ def enemy():
                         last_encounter = mob
                         player.damage(mob.damage)
                         if player.hp == player.maxhp:
+                            border(attackmsg, color.red)
                             break
                     if isinstance(item, Weapon) and item.uses <= 0:
                         print(color.yellow + f"Your {color.bright_blue + item.name + color.reset + color.yellow} broke!")
                         player.inv.remove(item)
-                    border(attackmsg, color.red)
+                    border(attackmsg, color.reset + color.red)
             else:
                 print(color.red + "Theres nothing in your inventory!")
                 continue
+            last_move = 1
         # second combat option is to run
         elif action == 2:
             while True:
                 # a pre-determined correct direction is generated. This cannot be a null direction, only one which the player can travel
-                r = random.choice(player.room[1:5])
+                r = random.choice(player.room.rooms)
                 if r is None:
                     continue
                 else:
-                    x = player.room.index(r)
+                    x = player.room.rooms.index(r) + 1
                     break
             print(f"direction is {controls[x]}")
             # ask user which direcion they will run from the monster
@@ -627,19 +701,21 @@ def enemy():
                 travel(r)
             # if the player guesses incorrectly, they die.
             else:
-                if player.room[controls.index(direction)] is None:
-                    escmsg = color.yellow + f"\nYou tried to escape, but you ran into a wall!"
+                if player.room.rooms[controls.index(direction)-1] is None:
+                    escmsg = color.yellow + f"You tried to escape, but you ran into a wall!"
                 else:
                     escmsg = color.yellow + f"You tried to escape but {color.bright_red + mob.name + color.reset + color.yellow} was too fast!"
+                border(escmsg, color.red)
                 print(escmsg)
                 print(color.bright_red + f"{mob.name + color.reset + color.yellow} attacks you.")
-                border(escmsg, color.red)
+                last_encounter = mob
                 player.damage(mob.damage)
-                border(escmsg, color.red)
+            last_move = 2
         # the third option is to sit down in front of the monster. In some cases this will provide success over other alternatives
         elif action == 3:
             talk = input("What would you like to talk about?")
             isdead = random.randint(0,4)
+            last_encounter = mob
             if isdead == 1:
                 print(f"{mob.name} enjoys talking about {talk}! You chat for a few minutes, then they let you pass.")
                 fight = False
@@ -647,11 +723,11 @@ def enemy():
                 print(f"{mob.name} hates talking about {talk}! They're so angry that they sacrifice their life to ensure your death.")
                 print(color.bright_red + f"{mob.name + color.reset + color.yellow} attacks you with the force of a thousand men.")
                 kill()
+            last_move = 3
         else:
             continue
     # tracks the last monster encountered and how it was defeated
-    last_encounter = mob
-    last_move = action
+
 
 
 # function for generating the loot pool
@@ -695,8 +771,7 @@ def gen_loot(count, tier, itemtype):
 
 # opens payer inventory
 def open_inv():
-
-    print(color.bright_yellow + "Your inventory contains:" + color.reset)
+    print(color.bright_yellow + "Your satchel contains:" + color.reset)
     i = 1
     # print the name of each item instance with a number in front of each for organization and selection
     border(45)
@@ -717,8 +792,8 @@ def search():
     # player must have available energy to search for loot
     if player.stamina > 0:
         # if the room has available loot, grant it to player and remove energy
-        if len(player.room[5]) > 0:
-            s = random.choice(player.room[5])
+        if len(player.room.loot) > 0:
+            s = random.choice(player.room.loot)
             player.collect(s)
             player.stamina -= 1
         # if no items remain, print this message
@@ -733,27 +808,30 @@ def search():
 def use():
     print("item used")
 
-
+room = 0
 # moves player based on directional input
 def travel(direction):
     global current_room
     global last_room
     global moves
+    global room
     d = None
     true = False
     # move the player in the specified direction, or inform them to select a valid direction if one is not provided
     while d is None and true is False:
         if direction in controls:
-            d = controls.index(direction)
+            d = controls.index(direction.upper())
             if d is None:
-                print(color.bright_red + "You cant go that direction")
+                print(color.bright_red + "Invalid direction")
                 break
-            next_room = player.room[d]
+            next_room = player.room.rooms[d-1]
             # if the direction selected yields an available room, move the player and inform them of it.
             if next_room is not None:
                 player.lastpos = player.pos
+                player.last_room = rooms[player.lastpos]
                 player.pos = next_room
-                player.room = room_list[player.pos]
+                player.room = rooms[player.pos]
+                room = player.room
                 loc()
                 moves += 1
                 if shoes in player.inv:
@@ -770,10 +848,11 @@ def travel(direction):
             # inform the user the direction they selected is not valid
             else:
                 print(color.bright_red + "You cant go that direction.")
-        elif direction in player.room:
+        elif direction in room.rooms:
             player.lastpos = player.pos
+            player.last_room = rooms[player.lastpos]
             player.pos = direction
-            player.room = room_list[player.pos]
+            player.room = rooms[player.pos]
             true = True
             x = "yep"
             loc()
@@ -805,33 +884,36 @@ def kill():
     global death
     global firstdeath
     global done
+    global fight
+    global fight_msg
+    global attackmsg
+    border(attackmsg, color.reset + color.red)
     if death:
         print(color.bright_red + "You died.")
         done = True
     else:
         if firstdeath:
             pause()
-            print(color.white + color.bold + "-----------------------------------------------------" + color.reset)
             print(color.yellow + "That's strange... You're back in the grungy stairwell")
             pause()
             print(f"Last you remember you were being struck down by {color.bright_red + last_encounter.name + color.reset}")
             pause()
             print(color.yellow + "You notice your items are gone. Your head is pounding.")
-            print(color.white + color.bold + "------------------------------------------------------")
             firstdeath = False
+            fight = False
 
         else:
             print(color.bright_red + "You died.")
-            print("You have been returned to the grungy stairwell")
+            print(color.bright_yellow + "You have been returned to the grungy stairwell")
             print(f"Your items were dropped in the {player.last_room.name}")
         for k in player.inv:
-            player.room[5].append(k)
+            player.room.add_loot(k)
             player.inv.remove(k)
         player.hp = player.maxhp
         player.stamina = 12
         player.pos = 0
         player.lastpos = player.pos
-        player.room = room_list[0]
+        player.room = rooms[0]
         player.last_room = player.room
 
 
@@ -875,7 +957,7 @@ def settings():
 
 # Prints location of player
 def loc():
-    print(color.reset + color.yellow + f"You are in the {color.bright_blue + player.room[0]}" + color.reset)
+    print(color.reset + color.yellow + f"You are in the {color.bright_blue + player.room.name}" + color.reset)
     yes = "no"
 
 
@@ -976,15 +1058,15 @@ while done is False:
     if first is True:
         # run settings config on first bootup
         settings()
-        for each in room_list[1:]:
-            room = int(room_list.index(each))
+        for each in rooms[1:]:
             loot_tier = random.choices([0, 1, 2, 3], weights=[5, 4, 3, 1.5], k=1)[0]
             loot = gen_loot(3, loot_tier, any_item)
             for loots in loot:
-                Loot().add(room, loots)
+                each.add_loot(loots)
         # creates starting item in the entry room
-        Loot().add(0, eyepatch)
+        stairwell.add_loot(eyepatch)
         first = False
+        loc()
     # runs each time the game loops, primary point of interaction
     user_input()
 
