@@ -180,21 +180,31 @@ class Color:
     black = '\u001b[30m'
     red = '\u001b[31m'
     green = '\u001b[32m'
-    yellow = '\u001b[33m'
+    yellow = '\u001b[93m'
     blue = '\u001b[34m'
     magenta = '\u001b[35m'
     cyan = '\u001b[36m'
     white = '\u001b[37m'
     reset = '\u001b[0m'
+    # bold colors
+    bold_black = '\u001b[30;1m'
+    bold_red = '\u001b[31;1m'
+    bold_green = '\u001b[32;1m'
+    bold_yellow = '\u001b[33;1m'
+    bold_blue = '\u001b[34;1m'
+    bold_magenta = '\u001b[35;1m'
+    bold_cyan = '\u001b[36;1m'
+    bold_white = '\u001b[37;1m'
+
     # bright colors
-    bright_black = '\u001b[30;1m'
-    bright_red = '\u001b[31;1m'
-    bright_green = '\u001b[32;1m'
-    bright_yellow = '\u001b[33;1m'
-    bright_blue = '\u001b[34;1m'
-    bright_magenta = '\u001b[35;1m'
-    bright_cyan = '\u001b[36;1m'
-    bright_white = '\u001b[37;1m'
+    bright_black = '\u001b[90;1m'
+    bright_red = '\u001b[91;1m'
+    bright_green = '\u001b[92;1m'
+    bright_yellow = '\u001b[93;1m'
+    bright_blue = '\u001b[94;1m'
+    bright_magenta = '\u001b[95;1m'
+    bright_cyan = '\u001b[96;1m'
+    bright_white = '\u001b[97;1m'
 
     # standard background colors
     background_black = '\u001b[40m'
@@ -272,7 +282,7 @@ class Weapon(Item):
 
 # consumables subclass for healing/special effects items. parameters of saturation and effect
 class Consumable(Item):
-    def __init__(self, name, desc, saturation, effect=-1):
+    def __init__(self, name, desc, saturation=0, effect=-1):
         self.item_type = consumable
         self.saturation = saturation
         self.effect = effect
@@ -282,9 +292,10 @@ class Consumable(Item):
 
 # Junk subclass, most items in this class are useless. some do damage
 class Junk(Item):
-    def __init__(self, name, desc, damage=0):
+    def __init__(self, name, desc, damage=0, uses=-1):
         self.item_type = junk
         self.damage = 0
+        self.uses = uses
         super(Junk, self).__init__(name, desc)
 
 
@@ -365,8 +376,15 @@ class Player:
             fight = False
             kill()
         else:
-            print(color.yellow + f"You took {color.bright_red}{damage}{color.reset + color.yellow} damage!")
-            print(color.yellow + f"Your hp is: {color.white} {self.hp}")
+            amount = ""
+            if damage <= 2:
+                amount = color.green + color.bold + "a little"
+            elif 2 < damage <= 4:
+                amount = color.bright_red + "some"
+            elif damage >= 5:
+                amount = color.red + color.bold + "a lot" + color.reset + color.yellow + "of"
+            print(color.yellow + f"You took {amount + color.reset + color.yellow} damage!")
+            print(color.yellow + f"Your hp is: {color.bright_red}{self.hp}")
 
     def heal(self, regen):
         if self.hp == self.maxhp:
@@ -383,9 +401,9 @@ class Player:
         self.inv.append(item)
         self.msgs = [f"You pick up the {item.name}", f"You collect the {item.name}"]
         if item.name[0].lower() in ['a','e','i','o','u']:
-            print(color.yellow + f"You found an {color.bright_blue + item.name}. {color.reset + color.yellow + item.description}")
+            print(color.yellow + f"You found an {color.bright_green + item.name}. {color.reset + color.yellow + item.description}")
         else:
-            print(color.yellow + f"You found a {color.bright_blue + item.name}. {color.reset + color.yellow + item.description}")
+            print(color.yellow + f"You found a {color.bold_blue + item.name}. {color.reset + color.yellow + item.description}")
         player.room[5].remove(item)
         # print(random.choice(self.msgs))
 
@@ -406,6 +424,19 @@ class Player:
         travel(nextt)
 
 
+class Room:
+    def __init__(self, name, desc, rooms=('n', 's', 'e', 'w')):
+        self.name = name
+        self.desc = desc
+        self.north = rooms[0]
+        self.south = rooms[1]
+        self.east = rooms[2]
+        self.west = rooms[3]
+        self.loot = []
+        self.monsters = []
+        self.first = True
+
+
 
 
 # Creation of object instances
@@ -417,9 +448,9 @@ bandage = Junk('Used Bandage', 'It may be used, but you can still use it again!'
 eyepatch = Junk('Bloody Eyepatch', "You put it on. It feels sticky and warm.")
 femur = Junk("Cracked Femur", "Finders keepers!")
 plank = Junk("Rotted Wooden Plank", "Hit yourself over the head with it! Maybe this is all just a dream...")
-pen = Junk("Ballpoint Pen", "Never a bad time to start writing your obituary.")
-letteropen = Junk("Wooden Letter Opener", "Who are you expecting mail from? Your grandma?",1)
-rubberband = Junk("Rubber Band", "Strike down your enemies!")
+pen = Junk("Ballpoint Pen", "Never a bad time to start writing your obituary.", 1, 1)
+letteropen = Junk("Wooden Letter Opener", "Who are you expecting mail from? Your grandma?",1, 2)
+rubberband = Junk("Rubber Band", "Strike down your enemies!",3, 1)
 hair = Junk("Ball of Hair", "Did you cough that up? Gross.")
 mirror = Junk("Broken Mirror", "It may be broken, but you can still see how ugly you are!")
 gameboy = Junk("Gameboy Advanced", "An escape your life! The video games make the pain go away!")
@@ -445,11 +476,13 @@ weapons = [swiss, switchblade, chefknife, machette, pencil, fork, nail, woodenst
 nails = Material("Box of Nails", "Maybe you can build something...")
 battery = Material('AAA battery', "Too bad you don't have a flashlight...")
 matches = Material("Soggy Box of Matches", "Better hope they still work...")
-stones = Material("Pile of Stones", "This could be used for something!")
+stones = Material("Pile of Stones", "Don't eat them.")
+splint = Material("Wooden Splint", "Try not to break your leg. But if you do, you've got a splint!")
+stick = Material("Stick", "How'd this get here?? I don't see any trees...")
 gauze = Material("Fresh Gauze", "I have a feeling you'll be needing this...")
 rope = Material("Knotted Rope", "Undo the knots and you can make a noose!")
 hammer = Material("Small Hammer", "Are you strong enough to lift that?")
-bhammer = Material("Big Hammer", "Who are you, Bob the Builder?")
+bhammer = Material("Big Hammer", "Don't drop that on your foot... you wont last long with a broken foot")
 # add materials to list
 materials = [nails, matches, stones, gauze, rope, hammer, bhammer, battery]
 
@@ -460,20 +493,27 @@ apple = Consumable("Bruised Apple", "Watch your back, before you get bruised too
 mouse = Consumable("Mutilated Mouse", "Not very appetizing... yet.", 4, effect=0)
 bread = Consumable("Stale loaf of Bread", "This could do some damage... Or you could eat it", 2.5, effect=0)
 medicine = Consumable("Mysterious Bottle Of Medicine", "At least you have a painless way out...", 0, effect=2)
-ratpoison = Consumable("Rat Poison", "You shouldn't eat this... Should you?", 0, effect=1)
+ratpoison = Consumable("Rat Poison", "You shouldn't eat this... Should you?", 0, effect=2)
 # add consumables to list
 consumables = [cheese, flesh, apple, mouse, bread, medicine]
+
+# creates progression items
+
+shoes = Integral("Padded Leather Boots", "Maybe these will help dampen your footsteps...")
+
+
 item_types = ["consumable", "material", "junk", "weapon"]
 # add all items to loot pool
 loot_pool = [consumables, materials, junks, weapons]
 rooms_loot = []
 
+# creation of enemies
 jumbo_rat = Creature(hostile, "Jumbo Rat", "A Jumbo Rat Appears! He looms over you, waiting to strike...", 5, 5)
-miniature_dragon = Creature(hostile, "Miniature Dragon", "A miniature dragon leaps out of the shadows! Me may be small, but he still breathes fire!", 14, 4)
-abraham = Creature(hostile, "Abraham Lincoln", "Abraham Lincoln jump down from the ceiling! He think's you're a slave trader!", 10, 3)
+miniature_dragon = Creature(hostile, "Miniature Dragon", "A Miniature Dragon leaps out of the shadows! Me may be small, but he still breathes fire!", 14, 4)
+abraham = Creature(hostile, "Abraham Lincoln", "Abraham Lincoln jumps down from the ceiling! He think's you're a slave trader!", 10, 3)
 hermon = Creature(hostile, "Mr. Hermon", "Mr. Hermon crawls out from the corner! Quick, solve his boom/chain problem before he sucks out your brains!", 2, 5)
 joe = Creature(hostile, "Joe", "Joe materializes out of thin air! Wait, that's not very threatening! He gives you a bag of almonds", 6, 2.25)
-monk = Creature(hostile, "Decrepid Monk", "A decrepid monk appears! He tries to shave your head.", 15, .8)
+monk = Creature(hostile, "Decrepid Monk", "A Decrepid Monk appears! He tries to shave your head.", 15, .8)
 luke = Creature(hostile, "Luke Skywalker", "Luke skywalker sprints into the corridor. His light saber hums at his side, ready to slice off your philanges", 20, .7)
 # add monsters to pool
 monsters = [jumbo_rat, miniature_dragon, abraham, hermon, joe, monk, luke]
@@ -490,6 +530,12 @@ last_encounter = ""
 last_move = ""
 fight = False
 
+
+def craft(item1, item2):
+
+
+
+
 # Spawning and generation
 def enemy():
     global done
@@ -498,6 +544,7 @@ def enemy():
     global fight
     mob = random.choice(monsters)
     fight = True
+    border
     # if the player successfully runs from a monster, only to encounter it again immediately after, run this statement
     if last_encounter == mob and last_move == 2:
         print(color.red + f"{last_encounter.name + color.yellow} has followed you to the {color.blue + room_list[current_room][0] + color.yellow}. You may have escaped their clutches before, "
@@ -507,11 +554,18 @@ def enemy():
         print(color.red + f"{last_encounter.name + color.yellow} has risen from the dead! Now even stronger, and with a thirst for vengeance!")
     # run the normal message if not a special encounter
     else:
-        print(color.yellow + mob.description)
+        if mob.description[0] == mob.name[0]:
+            x = 1
+        else:
+            x = 2
+        fight_msg = color.bold + color.yellow + mob.description[0:mob.description.index(mob.name[0])] + color.red + mob.description[mob.description.index(mob.name[0]):len(mob.name)+x] + color.reset + color.yellow + mob.description[len(mob.name)+x:]
+        border(fight_msg, color.red)
+        print(fight_msg)
+        border(fight_msg, color.red)
     # continue the fighting loop until fight is set to false. either by the monster defeating you, it being defeated
     while fight is True:
         # give user 3 actions to take upon encountering monster
-        action = user_input("custom", "What will you do? Fight [1] Run [2] Sit [3]", [1, 2, 3])
+        action = user_input("custom", "What will you do? Fight [1] Run [2] Chat [3]", [1, 2, 3])
         # first action is to fight, user can choose eligible item from inventory to attack with
         if action == 1:
             if player.inv:
@@ -519,7 +573,9 @@ def enemy():
                 # choice = int(user_input("custom", "Select an item to use in battle!", range(0, len(playerinv)+1)))
                 item = player.inv[user_input("custom", "Select an item to use in battle!", range(0, len(player.inv)+1))-1]
                 # some weapons can kill a mob in one hit
-                print(color.yellow + f"You attacked the {color.bright_red + mob.name + color.reset + color.yellow} with your {color.bright_blue + item.name + color.reset}")
+                attackmsg = color.yellow + f"You attacked the {color.bright_red + mob.name + color.reset + color.yellow} with your {color.blue + item.name + color.reset}"
+                print(attackmsg)
+                border(attackmsg, color.red)
                 if item.damage >= mob.hp:
                     print(color.yellow + "You beat {color.bright_red + mob.name}!")
                     if isinstance(item, Weapon):
@@ -528,11 +584,13 @@ def enemy():
                     fight = False
                 # if the player still has health, damage the monster
                 else:
+                    # take durability off of item if applicable
                     if isinstance(item, Weapon):
                         item.uses -= 1
                     mob.hp -= item.damage
+                    # inform the player of the damage dealt
                     print(color.yellow + f"You did {color.bright_red} {item.damage} damage" + color.reset)
-                    print(color.yellow + f"{mob.name} hp is {color.bright_green} {mob.hp}" + color.reset)
+                    print(color.yellow + f"{mob.name} hp is {color.bright_red}{mob.hp}" + color.reset)
                     # monster dies if hp drops below 0
                     if mob.hp <= 0:
                         print(color.yellow + f"You beat {mob.name}. Well done!")
@@ -545,7 +603,7 @@ def enemy():
                     if isinstance(item, Weapon) and item.uses <= 0:
                         print(color.yellow + f"Your {color.bright_blue + item.name + color.reset + color.yellow} broke!")
                         player.inv.remove(item)
-
+                    border(attackmsg, color.red)
             else:
                 print(color.red + "Theres nothing in your inventory!")
                 continue
@@ -559,28 +617,36 @@ def enemy():
                 else:
                     x = player.room.index(r)
                     break
-            print(f"x is {x}")
+            print(f"direction is {controls[x]}")
             # ask user which direcion they will run from the monster
-            direction = user_input("custom", f"Which way will you run? {controls[1:]}", controls[1:5])
-            print(direction)
+            direction = user_input("custom", f"Which way will you run?", controls[1:5])
             # if the player correctly guesses the direction, they escape
             if controls.index(direction) == x:
-                print(color.yellow + f"You successfully escaped {color.red + mob.name}!")
+                print(color.yellow + f"You successfully escaped {color.red + color.bold + mob.name}!")
                 fight = False
                 travel(r)
             # if the player guesses incorrectly, they die.
             else:
-                print(color.yellow + f"You tried to escape but {color.bright_red + mob.name + color.reset + color.yellow} was too fast!")
-                print(color.bright_red + f"{mob.name + color.reset + color.yellow} attacks you, dealing damage.")
+                if player.room[controls.index(direction)] is None:
+                    escmsg = color.yellow + f"\nYou tried to escape, but you ran into a wall!"
+                else:
+                    escmsg = color.yellow + f"You tried to escape but {color.bright_red + mob.name + color.reset + color.yellow} was too fast!"
+                print(escmsg)
+                print(color.bright_red + f"{mob.name + color.reset + color.yellow} attacks you.")
+                border(escmsg, color.red)
                 player.damage(mob.damage)
-                done = True
-                fight = False
+                border(escmsg, color.red)
         # the third option is to sit down in front of the monster. In some cases this will provide success over other alternatives
         elif action == 3:
-            action = input("What style of sitting would you like to partake in?")
-            print("You died.")
-            fight = False
-            done = True
+            talk = input("What would you like to talk about?")
+            isdead = random.randint(0,4)
+            if isdead == 1:
+                print(f"{mob.name} enjoys talking about {talk}! You chat for a few minutes, then they let you pass.")
+                fight = False
+            else:
+                print(f"{mob.name} hates talking about {talk}! They're so angry that they sacrifice their life to ensure your death.")
+                print(color.bright_red + f"{mob.name + color.reset + color.yellow} attacks you with the force of a thousand men.")
+                kill()
         else:
             continue
     # tracks the last monster encountered and how it was defeated
@@ -629,16 +695,22 @@ def gen_loot(count, tier, itemtype):
 
 # opens payer inventory
 def open_inv():
+
     print(color.bright_yellow + "Your inventory contains:" + color.reset)
     i = 1
     # print the name of each item instance with a number in front of each for organization and selection
+    border(45)
     for z in player.inv:
         if isinstance(z, Weapon):
-            print(color.cyan + f"{i}) {z.name} {color.white}[{z.item_type}] {color.green}[uses: {z.uses}] [tier: {z.tier}]")
+            print(color.blue + f"{color.yellow}{i}) {color.blue + z.name} {color.white}[{z.item_type}] {color.green}[uses: {z.uses}] [tier: {z.tier}]")
         else:
-            print(color.cyan + f"{i}) {z.name} {color.white}[{z.item_type}]")
+            print(color.blue + f"{color.yellow}{i}) {color.blue + z.name} {color.white}[{z.item_type}]")
         i += 1
+    border(45)
 
+
+# def obstacle():
+#
 
 # searches the room for loot
 def search():
@@ -666,6 +738,7 @@ def use():
 def travel(direction):
     global current_room
     global last_room
+    global moves
     d = None
     true = False
     # move the player in the specified direction, or inform them to select a valid direction if one is not provided
@@ -682,9 +755,18 @@ def travel(direction):
                 player.pos = next_room
                 player.room = room_list[player.pos]
                 loc()
+                moves += 1
+                if shoes in player.inv:
+                    if random.randint(0,3) == 1:
+                        enemy()
+                elif moves > 4:
+                    print(color.magenta + "You're making a lot of noise. Be more careful...")
+                    if random.randint(0, 1) == 1:
+                        enemy()
                 # 33% chance that a monster will spawn on any given move, other than the first move
-                if random.randint(0, 2) == 1 and first is not True:
-                    enemy()
+                else:
+                    if random.randint(0, 2) == 1 and first is not True:
+                        enemy()
             # inform the user the direction they selected is not valid
             else:
                 print(color.bright_red + "You cant go that direction.")
@@ -705,12 +787,12 @@ def travel(direction):
 def consume(item):
     effect = item.effect
     if effect == 0:
-        regen = random.randint(3, 6)
+        regen = random.randint(3, 5)
         player.heal(regen)
     elif effect == 1:
         print("you aight")
     elif effect == 2:
-        anim = random.choice(shape)
+        anim = random.choice(shapes)
         print("Thought you'd get out of here that easily, huh?")
         print(f"You turned into a {anim}")
     elif effect == -1:
@@ -729,17 +811,19 @@ def kill():
     else:
         if firstdeath:
             pause()
-            print("That's strange... You're back in the grungy stairwell")
+            print(color.white + color.bold + "-----------------------------------------------------" + color.reset)
+            print(color.yellow + "That's strange... You're back in the grungy stairwell")
             pause()
-            print(f"Last you remember you were being struck down by {last_encounter.name}")
+            print(f"Last you remember you were being struck down by {color.bright_red + last_encounter.name + color.reset}")
             pause()
-            print("You notice your items are gone. Your head is pounding.")
+            print(color.yellow + "You notice your items are gone. Your head is pounding.")
+            print(color.white + color.bold + "------------------------------------------------------")
             firstdeath = False
 
         else:
             print(color.bright_red + "You died.")
             print("You have been returned to the grungy stairwell")
-            print("Your items were dropped d")
+            print(f"Your items were dropped in the {player.last_room.name}")
         for k in player.inv:
             player.room[5].append(k)
             player.inv.remove(k)
@@ -752,6 +836,24 @@ def kill():
 
 
 # Utility Functions
+def border(leng, colour=""):
+    # if argument 'leng' is int, set border length equal to it
+    if isinstance(leng, int):
+        length = leng
+    # if argument 'leng' is a string, get the len() and set border length equal to that
+    elif isinstance(leng, str):
+        length = len(leng)
+    else:
+        length = 0
+    # if color is specified and is of the class 'Color', set argument to that color
+    if colour != "":
+        col = colour
+    # set color to white if no argument, or non-color argument, is specified
+    else:
+        col = color.reset
+    for i in range(0, length+1):
+        print(col + '-', end='')
+    print('', end='\n')
 
 
 # Configures settings
@@ -773,7 +875,7 @@ def settings():
 
 # Prints location of player
 def loc():
-    print(color.yellow + f"You are in the {color.bright_blue + player.room[0]}" + color.reset)
+    print(color.reset + color.yellow + f"You are in the {color.bright_blue + player.room[0]}" + color.reset)
     yes = "no"
 
 
@@ -781,63 +883,67 @@ def loc():
 def user_input(userinput="none", prompt="default", options=()):
     inp = None
     while inp is None:
-        # if no parameter is specified when the function is called, ask the user to input a command.
-        if userinput == "none":
-            cmd = input(color.bright_white + "Please enter a command:" + color.reset)
-            # if movement key is selected, then move player
-            if cmd.upper()[0] in controls[1:5]:
-                inp = cmd[0].upper()
-                travel(inp)
-            # e to open player inventory
-            elif cmd.upper()[0] == "E":
-                open_inv()
-            # v enables developer mode, with in game commands
-            elif cmd.lower() == "v":
-                devinp = input(color.bright_white + "1) list items in each room.\n2) probability simulation." + color.reset)
-                dev(devinp)
-                inp = "dev"
-            # if user presses q, search the room for loot
-            elif cmd.upper()[0] == "Q":
-                search()
-            # first character of any dev command
-            elif cmd[0] == "/" and dev_mode is True:
-                print(cmd)
-                dev(cmd)
-            # print invalid command if key pressed is not within control scheme, and inform player of valid commands
-            else:
-                print(color.bright_red + f"Invalid Command. Valid Commands: {controls + controlkeys}")
-                continue
-        # if direction is specified as function input type upon being called, automatically run the direction travel function
-        elif userinput == "direction":
-            if prompt == "default":
-                prompt = "Please input a direction:"
-            direct = input(color.bright_white + prompt.upper() + color.reset)
-            inp = direct[0]
+        try:
+            # if no parameter is specified when the function is called, ask the user to input a command.
+            if userinput == "none":
+                cmd = input(color.white + color.bold + "Please enter a command:" + color.reset)
+                # if movement key is selected, then move player
+                if cmd.upper()[0] in controls[1:5]:
+                    inp = cmd[0].upper()
+                    travel(inp)
+                # e to open player inventory
+                elif cmd.upper()[0] == "E":
+                    open_inv()
+                # v enables developer mode, with in game commands
+                elif cmd.lower() == "v":
+                    devinp = input(color.bright_white + "1) list items in each room.\n2) probability simulation." + color.reset)
+                    dev(devinp)
+                    inp = "dev"
+                # if user presses q, search the room for loot
+                elif cmd.upper()[0] == "Q":
+                    search()
+                # first character of any dev command
+                elif cmd[0] == "/" and dev_mode is True:
+                    print(cmd)
+                    dev(cmd)
+                # print invalid command if key pressed is not within control scheme, and inform player of valid commands
+                else:
+                    print(color.bright_red + f"Invalid Command. Valid Commands: {controls + controlkeys}")
+                    continue
+            # if direction is specified as function input type upon being called, automatically run the direction travel function
+            elif userinput == "direction":
+                if prompt == "default":
+                    prompt = "Please input a direction:"
+                direct = input(color.bright_white + prompt.upper() + color.reset)
+                inp = direct[0]
 
-        # most useful part of user_input function. allows for custom prompts and limits allowed user input to specified keys
-        # allows for customized input, best used to handle mis-pressed keys on custom inputs
-        elif userinput == "custom" and options != "default" and prompt != "default":
-            # can check if the program should be looking for integer input or char input. avoids many errors
-            if isinstance(options[0], int):
-                # try/except block handles errors in the event of mispressed key
-                try:
-                    cmd = int(input(color.magenta + prompt))
+            # most useful part of user_input function. allows for custom prompts and limits allowed user input to specified keys
+            # allows for customized input, best used to handle mis-pressed keys on custom inputs
+            elif userinput == "custom" and options != "default" and prompt != "default":
+                # can check if the program should be looking for integer input or char input. avoids many errors
+                if isinstance(options[0], int):
+                    # try/except block handles errors in the event of mispressed key
+                    try:
+                        cmd = int(input(color.bright_magenta + color.bold + prompt + color.reset))
+                        if cmd in options:
+                            inp = cmd
+                        else:
+                            print(color.bright_red + "Invalid input.")
+                    except ValueError:
+                        print(color.bright_red + 'Please enter a number.')
+                        continue
+                else:
+                    cmd = input(color.bright_magenta + color.bold + prompt + color.reset).upper()
                     if cmd in options:
                         inp = cmd
                     else:
                         print(color.bright_red + "Invalid input.")
-                except ValueError:
-                    print(color.bright_red + 'Please enter a number.')
-                    continue
-            else:
-                cmd = input(color.magenta + prompt).upper()
-                if cmd in options:
-                    inp = cmd
-                else:
-                    print(color.bright_red + "Invalid input.")
-                    continue
+                        continue
 
-        else:
+            else:
+                print(color.bright_red + "Invalid Command")
+                continue
+        except IndexError:
             print(color.bright_red + "Invalid Command")
             continue
         # the function returns the user input as a value usable as required by a function or otherwise
@@ -865,16 +971,11 @@ death = False
 done = False
 firstdeath = True
 color = Color
+moves = 0
 while done is False:
     if first is True:
         # run settings config on first bootup
         settings()
-        # prints "fake" generation messages for user enjoyment
-        print(color.bright_red + "Generating terrain...")
-        time.sleep(.25)
-        print("Randomizing loot...")
-        time.sleep(.25)
-        # generates the loot in each room
         for each in room_list[1:]:
             room = int(room_list.index(each))
             loot_tier = random.choices([0, 1, 2, 3], weights=[5, 4, 3, 1.5], k=1)[0]
@@ -883,24 +984,38 @@ while done is False:
                 Loot().add(room, loots)
         # creates starting item in the entry room
         Loot().add(0, eyepatch)
-        print("Spawning monsters...")
-        time.sleep(.25)
-        print("Tending the garden...")
-        time.sleep(.25)
-        print(color.blue + "Welcome to Dungeon Adventure [Alpha 1.4]!" + color.reset)
-        time.sleep(.25)
-        # tells player their initial location
-        loc()
-        # tells user to choose a direction to travel first
         first = False
     # runs each time the game loops, primary point of interaction
     user_input()
 
-    # currently in its unfinished state, the objective is to obtain all the loot in the dungeon
-    if len(playerinv) == len(loot_pool[0]+loot_pool[1]+loot_pool[2]+loot_pool[3]):
-        print("You win!")
-        done = True
-
 # if the player dies and the loop breaks, the game ends.
 print("Game Over.")
 
+gen = False
+
+if gen is True:
+    # prints "fake" generation messages for user enjoyment
+    print(color.bright_red + "Generating terrain...")
+    time.sleep(.25)
+    print("Randomizing loot...")
+    time.sleep(.25)
+    # generates the loot in each room
+    for each in room_list[1:]:
+        room = int(room_list.index(each))
+        # randomly chooses the tier of loot which will be in the specified room
+        loot_tier = random.choices([0, 1, 2, 3], weights=[5, 4, 3, 1.5], k=1)[0]
+        loot = gen_loot(3, loot_tier, any_item)
+        for loots in loot:
+            Loot().add(room, loots)
+    # creates starting item in the entry room
+    Loot().add(0, plank)
+    Loot().add(0, matches)
+    print("Spawning monsters...")
+    time.sleep(.25)
+    print("Tending the garden...")
+    time.sleep(.25)
+    print(color.blue + "Welcome to Dungeon Adventure [Alpha 1.4]!" + color.reset)
+    time.sleep(.25)
+    # tells player their initial location
+    loc()
+    # tells user to choose a direction to travel first
