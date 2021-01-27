@@ -63,6 +63,32 @@ material = "material"
 any_item = "any"
 hostile = "hostile"
 passive = "passive"
+room = 0
+removed = False
+fight = False
+last_encounter = ""
+escmsg = ""
+action = 0
+fight_msg = ""
+attackmsg = ""
+# spawn player, set starting variables
+# location tracking
+current_room = 0
+last_room = 0
+first = True
+controls = None
+playerinv = []
+# sets game controls
+controlkeys = ('Q', 'E')
+keys = ('directional keys', 'W', 'S', 'D', 'A')
+directions = ('cardinal letters/words', 'N', 'S', 'E', 'W')
+# enable/disable developer tools
+dev_mode = True
+death = False
+# main game loop
+done = False
+firstdeath = True
+moves = 0
 
 
 # Development Tools
@@ -222,6 +248,8 @@ class Color:
     reversed = '\u001b[7m'
 
 
+
+
 # creates an instance of a creature with relevant stats and metadata
 class Creature:
 
@@ -353,81 +381,7 @@ class Loot:
             print(z.name)
 
 
-class Player:
-
-    def __init__(self, player_health, stamina, inv=[], pos=0):
-        self.hp = player_health
-        self.maxhp = player_health
-        self.stamina = stamina
-        self.inv = inv
-        self.pos = pos
-        self.room = rooms[self.pos]
-        self.item = None
-        self.food = None
-        self.throw = None
-        self.lastpos = None
-        self.msgs = []
-
-    def damage(self, damage):
-        global done
-        global fight
-        global escmsg
-        global fight_msg
-        self.hp -= damage
-        if self.hp <= 0:
-            fight = False
-            kill()
-        else:
-            amount = ""
-            if damage <= 2:
-                amount = color.green + color.bold + "a little"
-            elif 2 < damage <= 4:
-                amount = color.bright_red + "some"
-            elif damage >= 5:
-                amount = color.red + color.bold + "a lot" + color.reset + color.yellow + " of"
-            print(color.yellow + f"You took {amount + color.reset + color.yellow} damage!")
-            print(color.yellow + f"Your hp is: {color.bright_red}{self.hp}")
-
-    def heal(self, regen):
-        if self.hp == self.maxhp:
-            print(color.yellow + "You are already at maximum health!")
-            healed = False
-        else:
-            self.hp += regen
-            healed = True
-        if self.hp > self.maxhp:
-            self.hp = self.maxhp
-        return healed
-
-    def collect(self, item):
-        self.inv.append(item)
-        msgs = [f"You pick up the {item.name}", f"You collect the {item.name}"]
-        if item.name[0].lower() in ['a', 'e', 'i', 'o', 'u']:
-            print(color.yellow + f"You found an {color.bright_green + item.name}. {color.reset + color.yellow + item.description}")
-        else:
-            print(color.yellow + f"You found a {color.bold_blue + item.name}. {color.reset + color.yellow + item.description}")
-        if self.room == stairwell:
-            print(color.magenta + "*you place it in your satchel*")
-        player.room.del_loot(item)
-        # print(random.choice(self.msgs))
-
-    def consume(self, item):
-        self.food = item
-
-    def throw(self, item):
-        self.throw = item
-
-    # def move(self, nextt):
-    #     self.room = room_list[self.pos]
-    #     self.last_room = self.lastpos
-    #     # print(f"You left the {self.room[0]}")
-    #     travel(nextt)
-    def move(self, nextt):
-        self.last_room = self.room
-        self.lastpos = self.pos
-        travel(nextt)
-
-
+# create instance of each room
 class Room:
     def __init__(self, room, desc=""):
         self.num = room
@@ -489,6 +443,90 @@ keepers_hall = Room(12)
 private_washroom = Room(13)
 rooms = [stairwell, washroom, torture, main_corridor, east_corridor, closet, keepers_quarters, west_corridor, kitchen, prisoners_quarters, prison_passage,
          keepers_passage, keepers_hall, private_washroom]
+
+
+# Player class
+class Player:
+
+    def __init__(self, player_health, stamina, inv=[], pos=0):
+        self.hp = player_health
+        self.maxhp = player_health
+        self.stamina = stamina
+        self.inv = inv
+        self.pos = pos
+        self.room = rooms[self.pos]
+        self.item = None
+        self.food = None
+        self.throw = None
+        self.lastpos = None
+        self.msgs = []
+
+    def damage(self, damage):
+        global done
+        global fight
+        global escmsg
+        global fight_msg
+        self.hp -= damage
+        if self.hp <= 0:
+            fight = False
+            kill()
+        else:
+            amount = ""
+            if damage <= 2:
+                amount = color.green + color.bold + "a little"
+            elif 2 < damage <= 4:
+                amount = color.bright_red + "some"
+            elif damage >= 5:
+                amount = color.red + color.bold + "a lot" + color.reset + color.yellow + " of"
+            print(color.yellow + f"You took {amount + color.reset + color.yellow} damage!")
+            # print(color.yellow + f"Your hp is: {color.bright_red}{self.hp}")
+
+    def heal(self, regen):
+        if self.hp == self.maxhp:
+            print(color.yellow + "You are already at maximum health!")
+            healed = False
+        else:
+            self.hp += regen
+            healed = True
+        if self.hp > self.maxhp:
+            self.hp = self.maxhp
+        return healed
+
+    def collect(self, item):
+        self.inv.append(item)
+        msgs = [f"You pick up the {item.name}", f"You collect the {item.name}"]
+        if item.name[0].lower() in ['a', 'e', 'i', 'o', 'u']:
+            print(color.yellow + f"You found an {color.bright_green + item.name}. {color.reset + color.yellow + item.description}")
+        else:
+            print(color.yellow + f"You found a {color.bold_blue + item.name}. {color.reset + color.yellow + item.description}")
+        if self.room == stairwell:
+            print(color.magenta + "*you place it in your satchel*")
+        player.room.del_loot(item)
+        # print(random.choice(self.msgs))
+
+    def consume(self, item):
+        self.food = item
+
+    def throw(self, item):
+        self.throw = item
+
+    # def move(self, nextt):
+    #     self.room = room_list[self.pos]
+    #     self.last_room = self.lastpos
+    #     # print(f"You left the {self.room[0]}")
+    #     travel(nextt)
+    def move(self, nextt):
+        self.last_room = self.room
+        self.lastpos = self.pos
+        travel(nextt)
+
+
+# create instance of player and color
+player = Player(12, 12, [], 0)
+color = Color
+
+
+
 
 # Creation of object instances
 
@@ -569,7 +607,7 @@ luke = Creature(hostile, "Luke Skywalker", "Luke skywalker sprints into the corr
 # add monsters to pool
 monsters = [jumbo_rat, miniature_dragon, abraham, hermon, joe, monk, luke]
 
-removed = False
+
 
 # transformations. some consumables allow you to transform
 shapes = ["Feral Rabbit", "Decrepid Racoon", "Flea Infested Squirrel", "Jumbotron", "Large sewer rat",
@@ -583,13 +621,6 @@ def craft(item1, item2):
     print("crafted")
 
 
-fight = False
-last_encounter = ""
-escmsg = ""
-action = 0
-fight_msg = ""
-attackmsg = ""
-
 # Spawning and generation
 def enemy():
     global done
@@ -599,6 +630,8 @@ def enemy():
     global action
     global fight_msg
     global attackmsg
+    global moves
+    moves = 0
     last_item = ""
     last_move = 0
     mob = random.choice(monsters)
@@ -661,7 +694,7 @@ def enemy():
                         item.uses -= 1
                     mob.hp -= item.damage
                     # inform the player of the damage dealt
-                    print(color.yellow + f"You did {color.bright_red} {item.damage} damage" + color.reset)
+                    print(color.yellow + f"You did {color.bright_red}{item.damage} damage" + color.reset)
                     print(color.yellow + f"{mob.name} hp is {color.bright_red}{mob.hp}" + color.reset)
                     # monster dies if hp drops below 0
                     if mob.hp <= 0:
@@ -727,7 +760,6 @@ def enemy():
         else:
             continue
     # tracks the last monster encountered and how it was defeated
-
 
 
 # function for generating the loot pool
@@ -808,7 +840,7 @@ def search():
 def use():
     print("item used")
 
-room = 0
+
 # moves player based on directional input
 def travel(direction):
     global current_room
@@ -1032,28 +1064,6 @@ def user_input(userinput="none", prompt="default", options=()):
         return inp
 
 
-# spawn player, set starting variables
-# location tracking
-current_room = 0
-last_room = 0
-first = True
-controls = None
-# create instance of player with base stats
-player = Player(12, 12, [], 0)
-playerinv = []
-# sets game controls
-controlkeys = ('Q', 'E')
-keys = ('directional keys', 'W', 'S', 'D', 'A')
-directions = ('cardinal letters/words', 'N', 'S', 'E', 'W')
-# enable/disable developer tools
-dev_mode = True
-
-death = False
-# main game loop
-done = False
-firstdeath = True
-color = Color
-moves = 0
 while done is False:
     if first is True:
         # run settings config on first bootup
