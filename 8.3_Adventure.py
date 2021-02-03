@@ -1097,6 +1097,7 @@ def main():
 
     # if the player dies and the loop breaks, the game ends.
     print("Game Over.")
+    print("yo")
 
 
 if __name__ == "__main__":
