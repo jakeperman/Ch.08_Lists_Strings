@@ -9,196 +9,6 @@ ADVENTURE PROGRAM
 import random
 import time
 
-room_list = []
-# Creates each room
-# Room parameters - ["Description", N, S, E, W]
-# 0
-room = ["grungy stairwell", 3, None, None, None]
-room_list.append(room)
-# 1
-room = ["washroom", 4, None, None, None]
-room_list.append(room)
-# 2
-room = ["torture hall", 7, None, None, None]
-room_list.append(room)
-# 3
-room = ["main corridor", 9, 0, 4, 7]
-room_list.append(room)
-# 4
-room = ["east corridor", 8, 1, 5, 3]
-room_list.append(room)
-# 5
-room = ["storage closet", None, None, None, 4]
-room_list.append(room)
-# 6
-room = ["keepers quarters", 12, 11, 7, None]
-room_list.append(room)
-# 7
-room = ["west corridor", None, 2, 3, 6]
-room_list.append(room)
-# 8
-room = ["desolate kitchen", None, 4, None, None]
-room_list.append(room)
-# 9
-room = ["prisoners quarters", None, 3, 10, None]
-room_list.append(room)
-# 10
-room = ["secret passage to closet", None, 5, None, None]
-room_list.append(room)
-# 11
-room = ["secret passage to stairwell", None, None, 0, None]
-room_list.append(room)
-# 12
-room = ["keepers hall", None, 6, 13, None]
-room_list.append(room)
-# 13
-room = ["private washroom", None, 6, None, 12]
-room_list.append(room)
-
-# assign commonly used string values to variables for easy access
-weapon = "weapon"
-consumable = "consumable"
-junk = "junk"
-material = "material"
-any_item = "any"
-hostile = "hostile"
-passive = "passive"
-room = 0
-removed = False
-fight = False
-last_encounter = ""
-escmsg = ""
-action = 0
-fight_msg = ""
-attackmsg = ""
-# spawn player, set starting variables
-# location tracking
-current_room = 0
-last_room = 0
-first = True
-controls = None
-playerinv = []
-# sets game controls
-controlkeys = ('Q', 'E')
-keys = ('directional keys', 'W', 'S', 'D', 'A')
-directions = ('cardinal letters/words', 'N', 'S', 'E', 'W')
-# enable/disable developer tools
-dev_mode = True
-death = False
-# main game loop
-done = False
-firstdeath = True
-moves = 0
-
-
-# Development Tools
-
-
-# probability simulation for various events
-def probsim(tier, runs, ipr=1):
-    junkcount = 0
-    weaponcount = 0
-    materialcount = 0
-    consumablecount = 0
-
-    # generate simulated loot for testing purposes
-    for x in range(0, runs):
-        loot = gen_loot(ipr, tier, any_item)
-        for i in range(0, len(loot)):
-            if loot[i].item_type == junk:
-                junkcount += 1
-            elif loot[i].item_type == weapon:
-                weaponcount += 1
-            elif loot[i].item_type == material:
-                materialcount += 1
-            elif loot[i].item_type == consumable:
-                consumablecount += 1
-    # print total count of each item and what percentage of the simulated loot pool it was
-    print(f"Junk: {junkcount} items. {(junkcount/runs)*100}%\n weapons: {weaponcount} items. {(weaponcount/runs)*100}%\n "
-          f"consumable: {consumablecount} items {(consumablecount/runs)*100}%\n material: {materialcount} items. {(materialcount/runs)*100}%")
-
-
-# dev commands menu
-def dev(inp):
-    global removed
-    if inp == "/list":
-        for rooms in room_list:
-            print(f"\n{room_list[room_list.index(rooms)][0].upper()}:")
-            for those in room_list[room_list.index(rooms)][5]:
-                print(those.name)
-    elif inp == "/sim":
-        sim = inp.split("m ")
-        # kind = input("\n1) tier sim\n 2) loot sim\n 3) tier + loot sim")
-        if sim == "tier":
-            for i in range(0, 14):
-                tier = random.choices([0, 1, 2, 3], weights=[5, 4, 3, 1.5], k=1)[0]
-                print(tier)
-        elif sim == "loot":
-            # run auto-sim
-            a = input("Run Auto Sim? [y/n]")
-            if a.upper() == "Y":
-                print("\ntier 0")
-                probsim(0, 100)
-                print("\ntier 1")
-                probsim(1, 100)
-                print("\ntier 2")
-                probsim(2, 100)
-                print("\ntier 3")
-                probsim(3, 100)
-            # run sim with customized parameters
-            elif a.upper() == "N":
-                t = input("What tier loot?")
-                r = input("How many runs?")
-                i = input("How many items per run?")
-                probsim(t, r, i)
-        else:
-            # generate a theoretical loot pool based on default probability
-            for them in room_list:
-                thetier = random.choices([0, 1, 2, 3], weights=[5, 4, 3, 1.5], k=1)[0]
-                test = []
-                it = gen_loot(3, thetier, any_item)
-                test.append(it)
-    # clear the loot pool, deleting item instances from all froms
-    elif inp == "/clear":
-        for rooms in room_list:
-            print(f"Clearing rooms... {round((room_list.index(rooms)/len(room_list))*100)}%")
-            removal = rooms[5]
-            room_list[room_list.index(rooms)].remove(removal)
-            # for loots in range(0, len(rooms[5])):
-            #     room_list[room_list.index(rooms)][5]
-        print("Done!")
-        removed = True
-    # re-generate the loot pool, only works if the /clear command is run first
-    elif inp == "/gen" and removed is True:
-        for that in room_list:
-            roomm = int(room_list.index(that))
-            loottier = random.choices([0, 1, 2, 3], weights=[5, 4, 3, 1.5], k=1)[0]
-            Loot(roomm).add(gen_loot(3, loottier, any_item))
-            print("done")
-    # clears the loot pool and regenerates it with one command
-    elif inp == "/reset":
-        print("Clearing rooms...")
-        for rooms in room_list:
-            # print(f"Clearing rooms... {round((room_list.index(rooms)/len(room_list))*100)}%")
-            removal = rooms[5]
-            room_list[room_list.index(rooms)].remove(removal)
-        print("Regenerating Loot...")
-        for that in room_list:
-            roomm = int(room_list.index(that))
-            loottier = random.choices([0, 1, 2, 3], weights=[5, 4, 3, 1.5], k=1)[0]
-            Loot(roomm).add(gen_loot(3, loottier, any_item))
-        print("Done.")
-    # spawn an item into the players inventory
-    elif inp == "/give":
-        print("here you go!")
-    # spawn a monster to fight
-    elif inp == "/spawn":
-        print("mob spawned!")
-    # teleport to a specific room
-    elif inp == "/tp":
-        print("teleported to room!")
-    elif inp == "/stats":
-        print(f"hp is: {player.hp}")
 
 # Classes
 class Color:
@@ -248,11 +58,8 @@ class Color:
     reversed = '\u001b[7m'
 
 
-
-
 # creates an instance of a creature with relevant stats and metadata
 class Creature:
-
     def __init__(self, kind, name="", description="", mob_hp=-1, damage=-1):
         self.name = name
         self.damage = damage
@@ -427,24 +234,6 @@ class Room:
         print("mob")
 
 
-stairwell = Room(0)
-washroom = Room(1)
-torture = Room(2)
-main_corridor = Room(3)
-east_corridor = Room(4)
-closet = Room(5)
-keepers_quarters = Room(6)
-west_corridor = Room(7)
-kitchen = Room(8)
-prisoners_quarters = Room(9)
-prison_passage = Room(10)
-keepers_passage = Room(11)
-keepers_hall = Room(12)
-private_washroom = Room(13)
-rooms = [stairwell, washroom, torture, main_corridor, east_corridor, closet, keepers_quarters, west_corridor, kitchen, prisoners_quarters, prison_passage,
-         keepers_passage, keepers_hall, private_washroom]
-
-
 # Player class
 class Player:
 
@@ -501,7 +290,8 @@ class Player:
             print(color.yellow + f"You found a {color.bold_blue + item.name}. {color.reset + color.yellow + item.description}")
         if self.room == stairwell:
             print(color.magenta + "*you place it in your satchel*")
-        player.room.del_loot(item)
+        if item in player.room.loot:
+            player.room.del_loot(item)
         # print(random.choice(self.msgs))
 
     def consume(self, item):
@@ -521,15 +311,224 @@ class Player:
         travel(nextt)
 
 
+room_list = []
+# Creates each room
+# Room parameters - ["Description", N, S, E, W]
+# 0
+room = ["grungy stairwell", 3, None, None, None]
+room_list.append(room)
+# 1
+room = ["washroom", 4, None, None, None]
+room_list.append(room)
+# 2
+room = ["torture hall", 7, None, None, None]
+room_list.append(room)
+# 3
+room = ["main corridor", 9, 0, 4, 7]
+room_list.append(room)
+# 4
+room = ["east corridor", 8, 1, 5, 3]
+room_list.append(room)
+# 5
+room = ["storage closet", None, None, None, 4]
+room_list.append(room)
+# 6
+room = ["keepers quarters", 12, 11, 7, None]
+room_list.append(room)
+# 7
+room = ["west corridor", None, 2, 3, 6]
+room_list.append(room)
+# 8
+room = ["desolate kitchen", None, 4, None, None]
+room_list.append(room)
+# 9
+room = ["prisoners quarters", None, 3, 10, None]
+room_list.append(room)
+# 10
+room = ["secret passage to closet", None, 5, None, None]
+room_list.append(room)
+# 11
+room = ["secret passage to stairwell", None, None, 0, None]
+room_list.append(room)
+# 12
+room = ["keepers hall", None, 6, 13, None]
+room_list.append(room)
+# 13
+room = ["private washroom", None, 6, None, 12]
+room_list.append(room)
+
+# assign commonly used string values to variables for easy access
+weapon = "weapon"
+consumable = "consumable"
+junk = "junk"
+material = "material"
+any_item = "any"
+hostile = "hostile"
+passive = "passive"
+room = 0
+removed = False
+fight = False
+last_encounter = ""
+escmsg = ""
+action = 0
+fight_msg = ""
+attackmsg = ""
+# spawn player, set starting variables
+# location tracking
+current_room = 0
+last_room = 0
+first = True
+playerinv = []
+# sets game controls
+controlkeys = ('Q', 'E')
+keys = ('directional keys', 'W', 'S', 'D', 'A')
+directions = ('cardinal letters/words', 'N', 'S', 'E', 'W')
+controls = keys
+# enable/disable developer tools
+dev_mode = True
+death = False
+# main game loop
+done = False
+firstdeath = True
+moves = 0
+
+# room instances
+stairwell = Room(0)
+washroom = Room(1)
+torture = Room(2)
+main_corridor = Room(3)
+east_corridor = Room(4)
+closet = Room(5)
+keepers_quarters = Room(6)
+west_corridor = Room(7)
+kitchen = Room(8)
+prisoners_quarters = Room(9)
+prison_passage = Room(10)
+keepers_passage = Room(11)
+keepers_hall = Room(12)
+private_washroom = Room(13)
+rooms = [stairwell, washroom, torture, main_corridor, east_corridor, closet, keepers_quarters, west_corridor, kitchen, prisoners_quarters, prison_passage,
+         keepers_passage, keepers_hall, private_washroom]
+
+# Dev Tools
+# Development Tools
+# probability simulation for various events
+def probsim(tier, runs, ipr=1):
+    junkcount = 0
+    weaponcount = 0
+    materialcount = 0
+    consumablecount = 0
+
+    # generate simulated loot for testing purposes
+    for x in range(0, runs):
+        loot = gen_loot(ipr, tier, any_item)
+        for i in range(0, len(loot)):
+            if loot[i].item_type == junk:
+                junkcount += 1
+            elif loot[i].item_type == weapon:
+                weaponcount += 1
+            elif loot[i].item_type == material:
+                materialcount += 1
+            elif loot[i].item_type == consumable:
+                consumablecount += 1
+    # print total count of each item and what percentage of the simulated loot pool it was
+    print(f"Junk: {junkcount} items. {(junkcount/runs)*100}%\n weapons: {weaponcount} items. {(weaponcount/runs)*100}%\n "
+          f"consumable: {consumablecount} items {(consumablecount/runs)*100}%\n material: {materialcount} items. {(materialcount/runs)*100}%")
+
+
+# dev commands menu
+def dev(inp):
+    global removed
+    if inp == "/list":
+        for rooms in room_list:
+            print(f"\n{room_list[room_list.index(rooms)][0].upper()}:")
+            for those in room_list[room_list.index(rooms)][5]:
+                print(those.name)
+    elif inp == "/sim":
+        sim = inp.split("m ")
+        # kind = input("\n1) tier sim\n 2) loot sim\n 3) tier + loot sim")
+        if sim == "tier":
+            for i in range(0, 14):
+                tier = random.choices([0, 1, 2, 3], weights=[5, 4, 3, 1.5], k=1)[0]
+                print(tier)
+        elif sim == "loot":
+            # run auto-sim
+            a = input("Run Auto Sim? [y/n]")
+            if a.upper() == "Y":
+                print("\ntier 0")
+                probsim(0, 100)
+                print("\ntier 1")
+                probsim(1, 100)
+                print("\ntier 2")
+                probsim(2, 100)
+                print("\ntier 3")
+                probsim(3, 100)
+            # run sim with customized parameters
+            elif a.upper() == "N":
+                t = input("What tier loot?")
+                r = input("How many runs?")
+                i = input("How many items per run?")
+                probsim(t, r, i)
+        else:
+            # generate a theoretical loot pool based on default probability
+            for them in room_list:
+                thetier = random.choices([0, 1, 2, 3], weights=[5, 4, 3, 1.5], k=1)[0]
+                test = []
+                it = gen_loot(3, thetier, any_item)
+                test.append(it)
+    # clear the loot pool, deleting item instances from all froms
+    elif inp == "/clear":
+        for rooms in room_list:
+            print(f"Clearing rooms... {round((room_list.index(rooms)/len(room_list))*100)}%")
+            removal = rooms[5]
+            room_list[room_list.index(rooms)].remove(removal)
+            # for loots in range(0, len(rooms[5])):
+            #     room_list[room_list.index(rooms)][5]
+        print("Done!")
+        removed = True
+    # re-generate the loot pool, only works if the /clear command is run first
+    elif inp == "/gen" and removed is True:
+        for that in room_list:
+            roomm = int(room_list.index(that))
+            loottier = random.choices([0, 1, 2, 3], weights=[5, 4, 3, 1.5], k=1)[0]
+            Loot(roomm).add(gen_loot(3, loottier, any_item))
+            print("done")
+    # clears the loot pool and regenerates it with one command
+    elif inp == "/reset":
+        print("Clearing rooms...")
+        for rooms in room_list:
+            # print(f"Clearing rooms... {round((room_list.index(rooms)/len(room_list))*100)}%")
+            removal = rooms[5]
+            room_list[room_list.index(rooms)].remove(removal)
+        print("Regenerating Loot...")
+        for that in room_list:
+            roomm = int(room_list.index(that))
+            loottier = random.choices([0, 1, 2, 3], weights=[5, 4, 3, 1.5], k=1)[0]
+            Loot(roomm).add(gen_loot(3, loottier, any_item))
+        print("Done.")
+    # spawn an item into the players inventory
+    elif inp == "/give":
+        print("here you go!")
+    # spawn a monster to fight
+    elif inp == "/spawn":
+        print("mob spawned!")
+    # teleport to a specific room
+    elif inp == "/tp":
+        print("teleported to room!")
+    elif inp == "/stats":
+        print(f"hp is: {player.hp}")
+
+
 # create instance of player and color
 player = Player(12, 12, [], 0)
 color = Color
 
 
-
+# Room Functions, triggers different events in each room
+# def stairwell():
+#     print("The match")
 
 # Creation of object instances
-
 # Creation of Junk
 hairbrush = Junk("Plastic Hairbrush", "It's bristles are slimy. You run it through your hair")
 screwdriver = Junk('Broken Screwdriver', "Now what are you gonna do with a broken screwdriver, huh?")
@@ -539,7 +538,7 @@ femur = Junk("Cracked Femur", "Finders keepers!")
 plank = Junk("Rotted Wooden Plank", "Hit yourself over the head with it! Maybe this is all just a dream...")
 pen = Junk("Ballpoint Pen", "Never a bad time to start writing your obituary.", 1, 1)
 letteropen = Junk("Wooden Letter Opener", "Who are you expecting mail from? Your grandma?",1, 2)
-rubberband = Junk("Rubber Band", "Strike down your enemies!",3, 1)
+rubberband = Junk("Rubber Band", "Strike down your enemies!", 3, 1)
 hair = Junk("Ball of Hair", "Did you cough that up? Gross.")
 mirror = Junk("Broken Mirror", "It may be broken, but you can still see how ugly you are!")
 gameboy = Junk("Gameboy Advanced", "An escape your life! The video games make the pain go away!")
@@ -572,6 +571,7 @@ gauze = Material("Fresh Gauze", "I have a feeling you'll be needing this...")
 rope = Material("Knotted Rope", "Undo the knots and you can make a noose!")
 hammer = Material("Small Hammer", "Are you strong enough to lift that?")
 bhammer = Material("Big Hammer", "Don't drop that on your foot... you wont last long with a broken foot")
+flint = Material("Flint and Striker", "Do you even know how to use this?")
 # add materials to list
 materials = [nails, matches, stones, gauze, rope, hammer, bhammer, battery]
 
@@ -1064,50 +1064,42 @@ def user_input(userinput="none", prompt="default", options=()):
         return inp
 
 
-while done is False:
-    if first is True:
-        # run settings config on first bootup
-        settings()
-        for each in rooms[1:]:
-            loot_tier = random.choices([0, 1, 2, 3], weights=[5, 4, 3, 1.5], k=1)[0]
-            loot = gen_loot(3, loot_tier, any_item)
-            for loots in loot:
-                each.add_loot(loots)
-        # creates starting item in the entry room
-        stairwell.add_loot(eyepatch)
-        first = False
-        loc()
-    # runs each time the game loops, primary point of interaction
-    user_input()
-
-# if the player dies and the loop breaks, the game ends.
-print("Game Over.")
-
-gen = False
-
-if gen is True:
-    # prints "fake" generation messages for user enjoyment
-    print(color.bright_red + "Generating terrain...")
-    time.sleep(.25)
-    print("Randomizing loot...")
-    time.sleep(.25)
-    # generates the loot in each room
-    for each in room_list[1:]:
-        room = int(room_list.index(each))
-        # randomly chooses the tier of loot which will be in the specified room
+def main():
+    for each in rooms[1:]:
         loot_tier = random.choices([0, 1, 2, 3], weights=[5, 4, 3, 1.5], k=1)[0]
         loot = gen_loot(3, loot_tier, any_item)
         for loots in loot:
-            Loot().add(room, loots)
+            each.add_loot(loots)
     # creates starting item in the entry room
-    Loot().add(0, plank)
-    Loot().add(0, matches)
-    print("Spawning monsters...")
-    time.sleep(.25)
-    print("Tending the garden...")
-    time.sleep(.25)
-    print(color.blue + "Welcome to Dungeon Adventure [Alpha 1.4]!" + color.reset)
-    time.sleep(.25)
-    # tells player their initial location
-    loc()
-    # tells user to choose a direction to travel first
+    stairwell.add_loot(eyepatch)
+    print(color.yellow + "You wake up in a room", end='')
+    time.sleep(2)
+    print(", its dark")
+    time.sleep(2)
+    print(f"Cold.")
+    time.sleep(1)
+    print(f"Afraid.")
+    time.sleep(1)
+    print(f"And Alone...")
+    time.sleep(1)
+    print(f"You stand up, ", end='')
+    time.sleep(1)
+    print(f"your legs shaking")
+    time.sleep(1)
+    input(f"Press {color.red + controls[1] + color.yellow} to take a step")
+    user_input("custom", "You feel a small object press against your foot as you shakily take a step. Press 'q' to "
+                     "pick it up.", 'Q')
+    player.collect(flint)
+    while done is False:
+
+        # runs each time the game loops, primary point of interaction
+        user_input()
+
+    # if the player dies and the loop breaks, the game ends.
+    print("Game Over.")
+
+
+if __name__ == "__main__":
+    main()
+
+
