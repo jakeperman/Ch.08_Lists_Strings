@@ -1088,8 +1088,11 @@ def main():
     time.sleep(1)
     input(f"Press {color.red + controls[1] + color.yellow} to take a step")
     user_input("custom", "You feel a small object press against your foot as you shakily take a step. Press 'q' to "
-                     "pick it up.", 'Q')
+               "pick it up.", 'Q')
     player.collect(flint)
+    time.sleep(1)
+    user_input("custom", "Press 'e' to open your satchel", 'E')
+    open_inv()
     while done is False:
 
         # runs each time the game loops, primary point of interaction
