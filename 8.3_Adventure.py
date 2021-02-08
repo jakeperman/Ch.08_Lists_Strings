@@ -671,7 +671,10 @@ def enemy():
                     open_inv()
                 # choice = int(user_input("custom", "Select an item to use in battle!", range(0, len(playerinv)+1)))
                 if action == 4 and last_item != "":
-                    item = last_item
+                    if last_item in player.inv:
+                        item = last_item
+                    else:
+                        print(f"You don't have the {last_item} anymore!")
                 else:
                     item = player.inv[user_input("custom", "Select an item to use in battle!", range(0, len(player.inv)+1))-1]
                     last_item = item
@@ -1064,6 +1067,12 @@ def user_input(userinput="none", prompt="default", options=()):
         return inp
 
 
+def dialogue(text):
+    for item in text:
+        print(item, end='', flush=True)
+        time.sleep(.1)
+
+
 def main():
     for each in rooms[1:]:
         loot_tier = random.choices([0, 1, 2, 3], weights=[5, 4, 3, 1.5], k=1)[0]
@@ -1072,27 +1081,36 @@ def main():
             each.add_loot(loots)
     # creates starting item in the entry room
     stairwell.add_loot(eyepatch)
-    print(color.yellow + "You wake up in a room", end='')
-    time.sleep(2)
-    print(", its dark")
-    time.sleep(2)
-    print(f"Cold.")
-    time.sleep(1)
-    print(f"Afraid.")
-    time.sleep(1)
-    print(f"And Alone...")
-    time.sleep(1)
-    print(f"You stand up, ", end='')
-    time.sleep(1)
-    print(f"your legs shaking")
-    time.sleep(1)
-    input(f"Press {color.red + controls[1] + color.yellow} to take a step")
-    user_input("custom", "You feel a small object press against your foot as you shakily take a step. Press 'q' to "
-               "pick it up.", 'Q')
+    # print(color.yellow + "You wake up in a room", end='')
+    # time.sleep(2)
+    # print(", its dark.")
+    # time.sleep(2)
+    # print(f"Cold.")
+    # time.sleep(1)
+    # print(f"Afraid.")
+    # time.sleep(1)
+    # print(f"And Alone...")
+    # time.sleep(1)
+    # print(f"You stand up, ", end='')
+    # time.sleep(1)
+    # print(f"your legs shaking")
+    # time.sleep(1)
+    # input(f"Press {color.red + controls[1] + color.yellow} to take a step")
+    user_input("custom", "You feel a small object press against your bare foot as you shakily take a step. Press 'q' to"
+               " pick it up.", 'Q')
     player.collect(flint)
     time.sleep(1)
     user_input("custom", "Press 'e' to open your satchel", 'E')
     open_inv()
+    user_input("custom", f"Press 1 to select your {flint.name}", '1')
+    speak = f"{color.yellow}You take out your {flint.name} and strike it. "
+    dialogue(speak)
+    time.sleep(2)
+    print(f"The room bursts into view for a split second as the sparks illuminate it", end=', ')
+    time.sleep(2.5)
+    print("then darkness again.. ")
+    time.sleep(1.5)
+    print("If only you had something to ignite with it...")
     while done is False:
 
         # runs each time the game loops, primary point of interaction
@@ -1100,7 +1118,6 @@ def main():
 
     # if the player dies and the loop breaks, the game ends.
     print("Game Over.")
-    print("yo")
 
 
 if __name__ == "__main__":
