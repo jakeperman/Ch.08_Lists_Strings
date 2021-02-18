@@ -8,242 +8,48 @@ ADVENTURE PROGRAM
 '''
 import random
 import time
-
-
-# Classes
-class Color:
-    # standard colors
-    black = '\u001b[30m'
-    red = '\u001b[31m'
-    green = '\u001b[32m'
-    yellow = '\u001b[93m'
-    blue = '\u001b[34m'
-    magenta = '\u001b[35m'
-    cyan = '\u001b[36m'
-    white = '\u001b[37m'
-    reset = '\u001b[0m'
-    # bold colors
-    bold_black = '\u001b[30;1m'
-    bold_red = '\u001b[31;1m'
-    bold_green = '\u001b[32;1m'
-    bold_yellow = '\u001b[33;1m'
-    bold_blue = '\u001b[34;1m'
-    bold_magenta = '\u001b[35;1m'
-    bold_cyan = '\u001b[36;1m'
-    bold_white = '\u001b[37;1m'
-
-    # bright colors
-    bright_black = '\u001b[90;1m'
-    bright_red = '\u001b[91;1m'
-    bright_green = '\u001b[92;1m'
-    bright_yellow = '\u001b[93;1m'
-    bright_blue = '\u001b[94;1m'
-    bright_magenta = '\u001b[95;1m'
-    bright_cyan = '\u001b[96;1m'
-    bright_white = '\u001b[97;1m'
-
-    # standard background colors
-    background_black = '\u001b[40m'
-    background_red = '\u001b[41m'
-    background_green = '\u001b[42m'
-    background_yellow = '\u001b[43m'
-    background_blue = '\u001b[44m'
-    background_magenta = '\u001b[45m'
-    background_cyan = '\u001b[46m'
-    background_white = '\u001b[47m'
-
-    # decorative
-    bold = '\u001b[1m'
-    underline = '\u001b[4m'
-    reversed = '\u001b[7m'
-
-
-# creates an instance of a creature with relevant stats and metadata
-class Creature:
-    def __init__(self, kind, name="", description="", mob_hp=-1, damage=-1):
-        self.name = name
-        self.damage = damage
-        self.description = description
-        self.hp = mob_hp
-        self.maxhp = mob_hp
-        self.kind = kind
-        self.list = []
-        self.value = None
-
-    # creates instance of a creature
-    def create(self, lst):
-        self.value = lst
-        for y in self.value:
-            self.list.append(y)
-
-    # list instnaces of creatures
-    def lst(self):
-        for z in self.list:
-            print(z)
-
-
-# enables creation of items with various properties dependent on item type
-class Item:
-
-    def __init__(self, name, desc=""):
-        self.name = name
-        self.description = desc
-        self.effect = ""
-        self.saturation = 0
-        self.special = ""
-        self.craftable = ""
-
-
-# weapon subclass for combat items. has unique parameters of damage, uses, tier, and special
-class Weapon(Item):
-    def __init__(self, name, desc, damage, uses=-1, tier=0, special="None"):
-        self.item_type = weapon
-        self.damage = damage
-        self.uses = uses
-        if self.uses == -1:
-            self.uses = 99999
-        self.tier = tier
-        self.special = special
-        if self.uses <= 0:
-            print("your item broke")
-        if self.damage <=2:
-            self.tier = 1
-        elif 2 < self.damage <= 5:
-            self.tier = 2
-        elif 5 < self.damage <= 7:
-            self.tier = 3
-        super(Weapon, self).__init__(name, desc)
-
-
-# consumables subclass for healing/special effects items. parameters of saturation and effect
-class Consumable(Item):
-    def __init__(self, name, desc, saturation=0, effect=-1):
-        self.item_type = consumable
-        self.saturation = saturation
-        self.effect = effect
-        self.damage = 0
-        super(Consumable, self).__init__(name, desc)
-
-
-# Junk subclass, most items in this class are useless. some do damage
-class Junk(Item):
-    def __init__(self, name, desc, damage=0, uses=-1):
-        self.item_type = junk
-        self.damage = 0
-        self.uses = uses
-        super(Junk, self).__init__(name, desc)
-
-
-# material subclass. materials are used for crafting or other special uses
-class Material(Item):
-    def __init__(self, name, desc, craftable="no"):
-        self.item_type = material
-        self.craftable = craftable
-        self.damage = 0
-        super(Material, self).__init__(name, desc)
-
-
-# subclass for integral items (those needed to progress through stages in the game)
-class Integral(Item):
-    def __init__(self, name, desc):
-        self.item_type = "Integral Item"
-        self.name = name
-        self.description = desc
-
-
-# creates instances of generated loot for a room
-# can be used to autogenerate the whole loot pool, or add a specific item to a specific room
-class Loot:
-
-    def __init__(self):
-        self.room = ""
-        self.loot = []
-        self.item = []
-        self.one = None
-
-    # add randomly generated loot to a room
-    def add(self, rooml, item):
-        self.room = rooml
-        # if multiple items specified, add them to list using this method
-        if type(item) == list:
-            self.item = item
-            for x in self.item:
-                self.one = self.item[self.item.index(x)]
-                self.loot.append(self.one)
-        else:
-            self.loot.append(item)
-
-        rooms_loot.append(self.loot)
-        # if no existing loot, this method is used to set the initial index of list before generating
-        if len(room_list[self.room]) < 6:
-            room_list[self.room].append([])
-        for items in self.loot:
-            x = self.loot[self.loot.index(items)]
-            # add each item to the loot index [5] of the room
-            room_list[self.room][5].append(x)
-
-    # list generated loot
-    def list(self):
-        for z in self.loot:
-            print(z.name)
-
-
-# create instance of each room
-class Room:
-    def __init__(self, room, desc=""):
-        self.num = room
-        self.name = room_list[room][0]
-        self.description = desc
-        self.north = room_list[room][1]
-        self.south = room_list[room][2]
-        self.east = room_list[room][3]
-        self.west = room_list[room][4]
-        self.rooms = [self.north, self.south, self.east, self.west]
-        self.monsters = []
-        self.loot = []
-        self.first = True
-        room_list[self.num].insert(5, [])
-
-    def add_loot(self, item):
-        # if multiple items specified, add them to list using this method
-        items = []
-        if isinstance(item, list):
-            for x in item:
-                items.append(x)
-        else:
-            items.append(item)
-        for those in items:
-            # add each item to the loot index [5] of the room
-            room_list[self.num][5].append(those)
-            self.loot.append(those)
-
-    def del_loot(self, item):
-        # if multiple items specified, remove them from the list using this method
-        items = []
-        if isinstance(item, list):
-            for x in item:
-                items.append(x)
-        else:
-            items.append(item)
-        for them in items:
-            # remove each item from the loot of the room
-            room_list[self.num][5].remove(them)
-            self.loot.remove(them)
-
-    def spawn_mob(self, creature="any"):
-        print("mob")
+import advtools
+import roomgen
+import loot
+import entities
+Creature = entities.Creature
+color = advtools.Color
+Junk = loot.Junk
+Weapon = loot.Weapon
+Consumable = loot.Consumable
+Material = loot.Material
+Integral = loot.Integral
+Room = roomgen.Room
+Loot = loot.Loot
+border = advtools.border
+# room instances
+stairwell = Room(0, "Grungy Stairwell", r_north=3)
+washroom = Room(1, "Public Washroom", r_north=4)
+torture = Room(2, "Torture Hall")
+main_corridor = Room(3, "Main Corridor", 9, 0, 4, 7)
+east_corridor = Room(4, "East Corridor", 8, 1, 5, 3)
+closet = Room(5, "Storage Closet", r_west=4)
+keepers_quarters = Room(6, "Keepers Quarters", 12, 11, 7)
+west_corridor = Room(7, "West Corridor", None, 2, 3, 6)
+kitchen = Room(8, "Desolate Kitchen", r_south=4)
+prisoners_quarters = Room(9, "Prisoners Quarters", r_south=3, r_east=10)
+prison_passage = Room(10, "Secret Passage", r_south=5, r_west=9)
+keepers_passage = Room(11, "Secret Passage", r_east=0, r_north=6)
+keepers_hall = Room(12, "Keepers Hall", r_south=6, r_east=13)
+private_washroom = Room(13, "Private Washroom", r_west=12)
+rooms = [stairwell, washroom, torture, main_corridor, east_corridor, closet, keepers_quarters, west_corridor, kitchen, prisoners_quarters, prison_passage,
+         keepers_passage, keepers_hall, private_washroom]
 
 
 # Player class
 class Player:
-
     def __init__(self, player_health, stamina, inv=[], pos=0):
         self.hp = player_health
         self.maxhp = player_health
         self.stamina = stamina
         self.inv = inv
-        self.pos = pos
-        self.room = rooms[self.pos]
+        self.pos = stairwell.num
+        self.room = stairwell
         self.item = None
         self.food = None
         self.throw = None
@@ -300,62 +106,6 @@ class Player:
     def throw(self, item):
         self.throw = item
 
-    # def move(self, nextt):
-    #     self.room = room_list[self.pos]
-    #     self.last_room = self.lastpos
-    #     # print(f"You left the {self.room[0]}")
-    #     travel(nextt)
-    def move(self, nextt):
-        self.last_room = self.room
-        self.lastpos = self.pos
-        travel(nextt)
-
-
-room_list = []
-# Creates each room
-# Room parameters - ["Description", N, S, E, W]
-# 0
-room = ["grungy stairwell", 3, None, None, None]
-room_list.append(room)
-# 1
-room = ["washroom", 4, None, None, None]
-room_list.append(room)
-# 2
-room = ["torture hall", 7, None, None, None]
-room_list.append(room)
-# 3
-room = ["main corridor", 9, 0, 4, 7]
-room_list.append(room)
-# 4
-room = ["east corridor", 8, 1, 5, 3]
-room_list.append(room)
-# 5
-room = ["storage closet", None, None, None, 4]
-room_list.append(room)
-# 6
-room = ["keepers quarters", 12, 11, 7, None]
-room_list.append(room)
-# 7
-room = ["west corridor", None, 2, 3, 6]
-room_list.append(room)
-# 8
-room = ["desolate kitchen", None, 4, None, None]
-room_list.append(room)
-# 9
-room = ["prisoners quarters", None, 3, 10, None]
-room_list.append(room)
-# 10
-room = ["secret passage to closet", None, 5, None, None]
-room_list.append(room)
-# 11
-room = ["secret passage to stairwell", None, None, 0, None]
-room_list.append(room)
-# 12
-room = ["keepers hall", None, 6, 13, None]
-room_list.append(room)
-# 13
-room = ["private washroom", None, 6, None, 12]
-room_list.append(room)
 
 # assign commonly used string values to variables for easy access
 weapon = "weapon"
@@ -392,141 +142,124 @@ done = False
 firstdeath = True
 moves = 0
 
-# room instances
-stairwell = Room(0)
-washroom = Room(1)
-torture = Room(2)
-main_corridor = Room(3)
-east_corridor = Room(4)
-closet = Room(5)
-keepers_quarters = Room(6)
-west_corridor = Room(7)
-kitchen = Room(8)
-prisoners_quarters = Room(9)
-prison_passage = Room(10)
-keepers_passage = Room(11)
-keepers_hall = Room(12)
-private_washroom = Room(13)
-rooms = [stairwell, washroom, torture, main_corridor, east_corridor, closet, keepers_quarters, west_corridor, kitchen, prisoners_quarters, prison_passage,
-         keepers_passage, keepers_hall, private_washroom]
-
 # Dev Tools
-# Development Tools
 # probability simulation for various events
-def probsim(tier, runs, ipr=1):
-    junkcount = 0
-    weaponcount = 0
-    materialcount = 0
-    consumablecount = 0
-
-    # generate simulated loot for testing purposes
-    for x in range(0, runs):
-        loot = gen_loot(ipr, tier, any_item)
-        for i in range(0, len(loot)):
-            if loot[i].item_type == junk:
-                junkcount += 1
-            elif loot[i].item_type == weapon:
-                weaponcount += 1
-            elif loot[i].item_type == material:
-                materialcount += 1
-            elif loot[i].item_type == consumable:
-                consumablecount += 1
-    # print total count of each item and what percentage of the simulated loot pool it was
-    print(f"Junk: {junkcount} items. {(junkcount/runs)*100}%\n weapons: {weaponcount} items. {(weaponcount/runs)*100}%\n "
-          f"consumable: {consumablecount} items {(consumablecount/runs)*100}%\n material: {materialcount} items. {(materialcount/runs)*100}%")
-
-
-# dev commands menu
-def dev(inp):
-    global removed
-    if inp == "/list":
-        for rooms in room_list:
-            print(f"\n{room_list[room_list.index(rooms)][0].upper()}:")
-            for those in room_list[room_list.index(rooms)][5]:
-                print(those.name)
-    elif inp == "/sim":
-        sim = inp.split("m ")
-        # kind = input("\n1) tier sim\n 2) loot sim\n 3) tier + loot sim")
-        if sim == "tier":
-            for i in range(0, 14):
-                tier = random.choices([0, 1, 2, 3], weights=[5, 4, 3, 1.5], k=1)[0]
-                print(tier)
-        elif sim == "loot":
-            # run auto-sim
-            a = input("Run Auto Sim? [y/n]")
-            if a.upper() == "Y":
-                print("\ntier 0")
-                probsim(0, 100)
-                print("\ntier 1")
-                probsim(1, 100)
-                print("\ntier 2")
-                probsim(2, 100)
-                print("\ntier 3")
-                probsim(3, 100)
-            # run sim with customized parameters
-            elif a.upper() == "N":
-                t = input("What tier loot?")
-                r = input("How many runs?")
-                i = input("How many items per run?")
-                probsim(t, r, i)
-        else:
-            # generate a theoretical loot pool based on default probability
-            for them in room_list:
-                thetier = random.choices([0, 1, 2, 3], weights=[5, 4, 3, 1.5], k=1)[0]
-                test = []
-                it = gen_loot(3, thetier, any_item)
-                test.append(it)
-    # clear the loot pool, deleting item instances from all froms
-    elif inp == "/clear":
-        for rooms in room_list:
-            print(f"Clearing rooms... {round((room_list.index(rooms)/len(room_list))*100)}%")
-            removal = rooms[5]
-            room_list[room_list.index(rooms)].remove(removal)
-            # for loots in range(0, len(rooms[5])):
-            #     room_list[room_list.index(rooms)][5]
-        print("Done!")
-        removed = True
-    # re-generate the loot pool, only works if the /clear command is run first
-    elif inp == "/gen" and removed is True:
-        for that in room_list:
-            roomm = int(room_list.index(that))
-            loottier = random.choices([0, 1, 2, 3], weights=[5, 4, 3, 1.5], k=1)[0]
-            Loot(roomm).add(gen_loot(3, loottier, any_item))
-            print("done")
-    # clears the loot pool and regenerates it with one command
-    elif inp == "/reset":
-        print("Clearing rooms...")
-        for rooms in room_list:
-            # print(f"Clearing rooms... {round((room_list.index(rooms)/len(room_list))*100)}%")
-            removal = rooms[5]
-            room_list[room_list.index(rooms)].remove(removal)
-        print("Regenerating Loot...")
-        for that in room_list:
-            roomm = int(room_list.index(that))
-            loottier = random.choices([0, 1, 2, 3], weights=[5, 4, 3, 1.5], k=1)[0]
-            Loot(roomm).add(gen_loot(3, loottier, any_item))
-        print("Done.")
-    # spawn an item into the players inventory
-    elif inp == "/give":
-        print("here you go!")
-    # spawn a monster to fight
-    elif inp == "/spawn":
-        print("mob spawned!")
-    # teleport to a specific room
-    elif inp == "/tp":
-        print("teleported to room!")
-    elif inp == "/stats":
-        print(f"hp is: {player.hp}")
+# def probsim(tier, runs, ipr=1):
+#     junkcount = 0
+#     weaponcount = 0
+#     materialcount = 0
+#     consumablecount = 0
+#
+#     # generate simulated loot for testing purposes
+#     for x in range(0, runs):
+#         loot = gen_loot(ipr, tier, any_item)
+#         for i in range(0, len(loot)):
+#             if loot[i].item_type == junk:
+#                 junkcount += 1
+#             elif loot[i].item_type == weapon:
+#                 weaponcount += 1
+#             elif loot[i].item_type == material:
+#                 materialcount += 1
+#             elif loot[i].item_type == consumable:
+#                 consumablecount += 1
+#     # print total count of each item and what percentage of the simulated loot pool it was
+#     print(f"Junk: {junkcount} items. {(junkcount/runs)*100}%\n weapons: {weaponcount} items. {(weaponcount/runs)*100}%\n "
+#           f"consumable: {consumablecount} items {(consumablecount/runs)*100}%\n material: {materialcount} items. {(materialcount/runs)*100}%")
+#
+#
+# # dev commands menu
+# def dev(inp):
+#     global removed
+#     if inp == "/list":
+#         for rooms in room_list:
+#             print(f"\n{room_list[room_list.index(rooms)][0].upper()}:")
+#             for those in room_list[room_list.index(rooms)][5]:
+#                 print(those.name)
+#     elif inp == "/sim":
+#         sim = inp.split("m ")
+#         # kind = input("\n1) tier sim\n 2) loot sim\n 3) tier + loot sim")
+#         if sim == "tier":
+#             for i in range(0, 14):
+#                 tier = random.choices([0, 1, 2, 3], weights=[5, 4, 3, 1.5], k=1)[0]
+#                 print(tier)
+#         elif sim == "loot":
+#             # run auto-sim
+#             a = input("Run Auto Sim? [y/n]")
+#             if a.upper() == "Y":
+#                 print("\ntier 0")
+#                 probsim(0, 100)
+#                 print("\ntier 1")
+#                 probsim(1, 100)
+#                 print("\ntier 2")
+#                 probsim(2, 100)
+#                 print("\ntier 3")
+#                 probsim(3, 100)
+#             # run sim with customized parameters
+#             elif a.upper() == "N":
+#                 t = input("What tier loot?")
+#                 r = input("How many runs?")
+#                 i = input("How many items per run?")
+#                 probsim(t, r, i)
+#         else:
+#             # generate a theoretical loot pool based on default probability
+#             for them in room_list:
+#                 thetier = random.choices([0, 1, 2, 3], weights=[5, 4, 3, 1.5], k=1)[0]
+#                 test = []
+#                 it = gen_loot(3, thetier, any_item)
+#                 test.append(it)
+#     # clear the loot pool, deleting item instances from all froms
+#     elif inp == "/clear":
+#         for rooms in room_list:
+#             print(f"Clearing rooms... {round((room_list.index(rooms)/len(room_list))*100)}%")
+#             removal = rooms[5]
+#             room_list[room_list.index(rooms)].remove(removal)
+#             # for loots in range(0, len(rooms[5])):
+#             #     room_list[room_list.index(rooms)][5]
+#         print("Done!")
+#         removed = True
+#     # re-generate the loot pool, only works if the /clear command is run first
+#     elif inp == "/gen" and removed is True:
+#         for that in room_list:
+#             roomm = int(room_list.index(that))
+#             loottier = random.choices([0, 1, 2, 3], weights=[5, 4, 3, 1.5], k=1)[0]
+#             Loot(roomm).add(gen_loot(3, loottier, any_item))
+#             print("done")
+#     # clears the loot pool and regenerates it with one command
+#     elif inp == "/reset":
+#         print("Clearing rooms...")
+#         for rooms in room_list:
+#             # print(f"Clearing rooms... {round((room_list.index(rooms)/len(room_list))*100)}%")
+#             removal = rooms[5]
+#             room_list[room_list.index(rooms)].remove(removal)
+#         print("Regenerating Loot...")
+#         for that in room_list:
+#             roomm = int(room_list.index(that))
+#             loottier = random.choices([0, 1, 2, 3], weights=[5, 4, 3, 1.5], k=1)[0]
+#             Loot(roomm).add(gen_loot(3, loottier, any_item))
+#         print("Done.")
+#     # spawn an item into the players inventory
+#     elif inp == "/give":
+#         print("here you go!")
+#     # spawn a monster to fight
+#     elif inp == "/spawn":
+#         print("mob spawned!")
+#     # teleport to a specific room
+#     elif inp == "/tp":
+#         print("teleported to room!")
+#     elif inp == "/stats":
+#         print(f"hp is: {player.hp}")
 
 
 # create instance of player and color
 player = Player(12, 12, [], 0)
-color = Color
+
 
 
 # Room Functions, triggers different events in each room
 # def stairwell():
 #     print("The match")
+
+
 
 # Creation of object instances
 # Creation of Junk
@@ -952,25 +685,7 @@ def kill():
         player.last_room = player.room
 
 
-# Utility Functions
-def border(leng, colour=""):
-    # if argument 'leng' is int, set border length equal to it
-    if isinstance(leng, int):
-        length = leng
-    # if argument 'leng' is a string, get the len() and set border length equal to that
-    elif isinstance(leng, str):
-        length = len(leng)
-    else:
-        length = 0
-    # if color is specified and is of the class 'Color', set argument to that color
-    if colour != "":
-        col = colour
-    # set color to white if no argument, or non-color argument, is specified
-    else:
-        col = color.reset
-    for i in range(0, length+1):
-        print(col + '-', end='')
-    print('', end='\n')
+
 
 
 # Configures settings

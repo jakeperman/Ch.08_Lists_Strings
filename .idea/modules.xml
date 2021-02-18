@@ -2,9 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/../Ch.03_Input_Output/.idea/Ch.03_Input_Output.iml" filepath="$PROJECT_DIR$/../Ch.03_Input_Output/.idea/Ch.03_Input_Output.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/Ch.08_Lists_Strings.iml" filepath="$PROJECT_DIR$/.idea/Ch.08_Lists_Strings.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../Ch.09_Functions/.idea/Ch.09_Functions.iml" filepath="$PROJECT_DIR$/../Ch.09_Functions/.idea/Ch.09_Functions.iml" />
     </modules>
   </component>
 </project>
