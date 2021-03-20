@@ -1,4 +1,7 @@
 # room class
+import loot
+
+
 class Room:
     def __init__(self, num, name, r_north=None, r_south=None, r_east=None, r_west=None, desc=""):
         self.num = num

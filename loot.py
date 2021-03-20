@@ -1,3 +1,4 @@
+import random
 weapon = "weapon"
 consumable = "consumable"
 junk = "junk"
@@ -6,8 +7,8 @@ any_item = "any"
 hostile = "hostile"
 passive = "passive"
 
-class Loot:
 
+class Loot:
     def __init__(self):
         self.room = ""
         self.loot = []
@@ -15,8 +16,44 @@ class Loot:
         self.one = None
 
     # add randomly generated loot to a room
-    def add(self, rooml, item):
-        self.room = rooml
+    @staticmethod
+    def generate(count, tier, loot_pool, prob=None):
+        nums = [0, 1, 2, 3]
+        room_loot = []
+        # if item generation is set to any, run random generation
+        while count > 0:
+            count -= 1
+            if prob is None:
+                # different odds for each tier of loot, 0 is the worst, 3 is the highest
+                # mostly junk, some consumables and materials, no weapons
+                if tier == 0:
+                    index = random.choices(nums, weights=[2, 2, 6, 0], k=1)
+                    room_loot = random.choices(loot_pool[index[0]], k=1)
+                # even amount of consumables, materials, and weapons, but mostly junk
+                elif tier == 1:
+                    index = random.choices(nums, weights=[2, 2, 5, 2], k=1)
+                    room_loot = random.choices(loot_pool[index[0]], k=1)
+                # even amount of all items
+                elif tier == 2:
+                    index = random.choices(nums, weights=[3, 3, 3, 3], k=1)
+                    room_loot = random.choices(loot_pool[index[0]], k=1)
+                # almost no junk, mostly weapons and materials, some consumables
+                elif tier == 3:
+                    index = random.choices(nums, weights=[3, 4, 1, 5], k=1)
+                    room_loot = random.choices(loot_pool[index[0]], k=1)
+                else:
+                    print("No items generated")
+                    room_loot = "none"
+            else:
+                index = random.choices(nums, weights=prob, k=1)
+                room_loot = random.choices(loot_pool[index[0]], k=1)
+            # add loot data to the room
+            room_loot.append(room_loot)
+
+        return room_loot
+
+    def add(self, room, item):
+        self.room = room
         # if multiple items specified, add them to list using this method
         if type(item) == list:
             self.item = item
@@ -30,6 +67,7 @@ class Loot:
     def list(self):
         for z in self.loot:
             print(z.name)
+
 
 # Item classes
 # enables creation of items with various properties dependent on item type
@@ -99,3 +137,7 @@ class Integral(Item):
         self.item_type = "Integral Item"
         self.name = name
         self.description = desc
+        
+
+# function for generating the loot pool
+

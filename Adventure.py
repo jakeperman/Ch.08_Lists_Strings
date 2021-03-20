@@ -55,6 +55,7 @@ class Player:
         self.throw = None
         self.lastpos = None
         self.msgs = []
+        self.inv_size = 5
 
     def damage(self, damage):
         global done
@@ -87,6 +88,18 @@ class Player:
             self.hp = self.maxhp
         return healed
 
+    # searches the room for loot
+    @staticmethod
+    def search():
+        # player must have available energy to search for loot
+        if len(player.room.loot) > 0:
+            s = random.choice(player.room.loot)
+            player.collect(s)
+            player.stamina -= 1
+        # if no items remain, print this message
+        else:
+            print(color.yellow + "You found all the items in this room!")
+
     def collect(self, item):
         self.inv.append(item)
         msgs = [f"You pick up the {item.name}", f"You collect the {item.name}"]
@@ -100,11 +113,41 @@ class Player:
             player.room.del_loot(item)
         # print(random.choice(self.msgs))
 
+    # called when a player consumes an item
     def consume(self, item):
-        self.food = item
+        effect = item.effect
+        if effect == 0:
+            regen = random.randint(3, 5)
+            player.heal(regen)
+        elif effect == 1:
+            print("you aight")
+            self.damage(random.randint(1,4))
+        elif effect == 2:
+            anim = random.choice(shapes)
+            print("Thought you'd get out of here that easily, huh?")
+            print(f"You turned into a {anim}")
+        elif effect == -1:
+            print(color.bright_red + "You cant eat that.")
 
     def throw(self, item):
         self.throw = item
+
+class RoomFuncs:
+    def __init__(self):
+        self.room = ""
+
+    def loose_brick(self):
+        if crowbar in player.inv:
+            dialogue("You spot a loose stone in the wall.")
+            user_input("custom", "Press q to use your crowbar and pry it loose.", "Q")
+        else:
+            dialogue("You spot a loose stone in the wall. You think you could pry it loose if you had some sort of prying tool")
+    def locked_door(self):
+        print("locked")
+
+    # def stairwell(self):
+
+
 
 
 # assign commonly used string values to variables for easy access
@@ -141,113 +184,7 @@ death = False
 done = False
 firstdeath = True
 moves = 0
-
-# Dev Tools
-# probability simulation for various events
-# def probsim(tier, runs, ipr=1):
-#     junkcount = 0
-#     weaponcount = 0
-#     materialcount = 0
-#     consumablecount = 0
-#
-#     # generate simulated loot for testing purposes
-#     for x in range(0, runs):
-#         loot = gen_loot(ipr, tier, any_item)
-#         for i in range(0, len(loot)):
-#             if loot[i].item_type == junk:
-#                 junkcount += 1
-#             elif loot[i].item_type == weapon:
-#                 weaponcount += 1
-#             elif loot[i].item_type == material:
-#                 materialcount += 1
-#             elif loot[i].item_type == consumable:
-#                 consumablecount += 1
-#     # print total count of each item and what percentage of the simulated loot pool it was
-#     print(f"Junk: {junkcount} items. {(junkcount/runs)*100}%\n weapons: {weaponcount} items. {(weaponcount/runs)*100}%\n "
-#           f"consumable: {consumablecount} items {(consumablecount/runs)*100}%\n material: {materialcount} items. {(materialcount/runs)*100}%")
-#
-#
-# # dev commands menu
-# def dev(inp):
-#     global removed
-#     if inp == "/list":
-#         for rooms in room_list:
-#             print(f"\n{room_list[room_list.index(rooms)][0].upper()}:")
-#             for those in room_list[room_list.index(rooms)][5]:
-#                 print(those.name)
-#     elif inp == "/sim":
-#         sim = inp.split("m ")
-#         # kind = input("\n1) tier sim\n 2) loot sim\n 3) tier + loot sim")
-#         if sim == "tier":
-#             for i in range(0, 14):
-#                 tier = random.choices([0, 1, 2, 3], weights=[5, 4, 3, 1.5], k=1)[0]
-#                 print(tier)
-#         elif sim == "loot":
-#             # run auto-sim
-#             a = input("Run Auto Sim? [y/n]")
-#             if a.upper() == "Y":
-#                 print("\ntier 0")
-#                 probsim(0, 100)
-#                 print("\ntier 1")
-#                 probsim(1, 100)
-#                 print("\ntier 2")
-#                 probsim(2, 100)
-#                 print("\ntier 3")
-#                 probsim(3, 100)
-#             # run sim with customized parameters
-#             elif a.upper() == "N":
-#                 t = input("What tier loot?")
-#                 r = input("How many runs?")
-#                 i = input("How many items per run?")
-#                 probsim(t, r, i)
-#         else:
-#             # generate a theoretical loot pool based on default probability
-#             for them in room_list:
-#                 thetier = random.choices([0, 1, 2, 3], weights=[5, 4, 3, 1.5], k=1)[0]
-#                 test = []
-#                 it = gen_loot(3, thetier, any_item)
-#                 test.append(it)
-#     # clear the loot pool, deleting item instances from all froms
-#     elif inp == "/clear":
-#         for rooms in room_list:
-#             print(f"Clearing rooms... {round((room_list.index(rooms)/len(room_list))*100)}%")
-#             removal = rooms[5]
-#             room_list[room_list.index(rooms)].remove(removal)
-#             # for loots in range(0, len(rooms[5])):
-#             #     room_list[room_list.index(rooms)][5]
-#         print("Done!")
-#         removed = True
-#     # re-generate the loot pool, only works if the /clear command is run first
-#     elif inp == "/gen" and removed is True:
-#         for that in room_list:
-#             roomm = int(room_list.index(that))
-#             loottier = random.choices([0, 1, 2, 3], weights=[5, 4, 3, 1.5], k=1)[0]
-#             Loot(roomm).add(gen_loot(3, loottier, any_item))
-#             print("done")
-#     # clears the loot pool and regenerates it with one command
-#     elif inp == "/reset":
-#         print("Clearing rooms...")
-#         for rooms in room_list:
-#             # print(f"Clearing rooms... {round((room_list.index(rooms)/len(room_list))*100)}%")
-#             removal = rooms[5]
-#             room_list[room_list.index(rooms)].remove(removal)
-#         print("Regenerating Loot...")
-#         for that in room_list:
-#             roomm = int(room_list.index(that))
-#             loottier = random.choices([0, 1, 2, 3], weights=[5, 4, 3, 1.5], k=1)[0]
-#             Loot(roomm).add(gen_loot(3, loottier, any_item))
-#         print("Done.")
-#     # spawn an item into the players inventory
-#     elif inp == "/give":
-#         print("here you go!")
-#     # spawn a monster to fight
-#     elif inp == "/spawn":
-#         print("mob spawned!")
-#     # teleport to a specific room
-#     elif inp == "/tp":
-#         print("teleported to room!")
-#     elif inp == "/stats":
-#         print(f"hp is: {player.hp}")
+Loot = loot.Loot()
 
 
 # create instance of player and color
@@ -322,6 +259,10 @@ consumables = [cheese, flesh, apple, mouse, bread, medicine]
 # creates progression items
 
 shoes = Integral("Padded Leather Boots", "Maybe these will help dampen your footsteps...")
+torch = Integral("Torch", "This might shed some light on the situation")
+crowbar = Integral("Rusted Crowbar", "It may be rusty, but it's still rather trusty!")
+key = Integral("Key", "This probably opens something")
+integral = [shoes, torch, crowbar]
 
 
 item_types = ["consumable", "material", "junk", "weapon"]
@@ -347,7 +288,6 @@ shapes = ["Feral Rabbit", "Decrepid Racoon", "Flea Infested Squirrel", "Jumbotro
           "French Baguette", "Piece of Sidewalk Chalk", "Headless Pigeon", "Piece of Sandpaper"]
 shape = Creature(passive)
 shape.create(shapes)
-room_monsters = []
 
 
 def craft(item1, item2):
@@ -438,7 +378,7 @@ def enemy():
                         fight = False
                     else:
                         last_encounter = mob
-                        player.damage(mob.damage)
+                        player.damage(random.randint(mob.damage-1, mob.damage+1))
                         if player.hp == player.maxhp:
                             border(attackmsg, color.red)
                             break
@@ -498,43 +438,6 @@ def enemy():
     # tracks the last monster encountered and how it was defeated
 
 
-# function for generating the loot pool
-def gen_loot(count, tier, itemtype):
-    nums = [0, 1, 2, 3]
-    rooms_loott = []
-    # if item generation is set to any, run random generation
-    while count > 0:
-        count -= 1
-        if itemtype == "any":
-            # different odds for each tier of loot, 0 is the worst, 3 is the highest
-            # mostly junk, some consumables and materials, no weapons
-            if tier == 0:
-                index = random.choices(nums, weights=[2, 2, 6, 0], k=1)
-                room_loot = random.choices(loot_pool[index[0]], k=1)
-            # even amount of consumables, materials, and weapons, but mostly junk
-            elif tier == 1:
-                index = random.choices(nums, weights=[2, 2, 5, 2], k=1)
-                room_loot = random.choices(loot_pool[index[0]], k=1)
-            # even amount of all items
-            elif tier == 2:
-                index = random.choices(nums, weights=[3, 3, 3, 3], k=1)
-                room_loot = random.choices(loot_pool[index[0]], k=1)
-            # almost no junk, mostly weapons and materials, some consumables
-            elif tier == 3:
-                index = random.choices(nums, weights=[3, 4, 1, 5], k=1)
-                room_loot = random.choices(loot_pool[index[0]], k=1)
-        # if loot type is specified, pick random items from that item's loot pool
-        elif itemtype in item_types:
-            room_loot = random.choices(loot_pool[item_types.index(itemtype)], k=1)[0]
-        else:
-            print("No items generated")
-            room_loot = "none"
-        # add loot data to the room
-        rooms_loott.append(room_loot)
-
-    return rooms_loott
-
-
 # Player control functions
 
 # opens payer inventory
@@ -550,26 +453,14 @@ def open_inv():
             print(color.blue + f"{color.yellow}{i}) {color.blue + z.name} {color.white}[{z.item_type}]")
         i += 1
     border(45)
+    user_input("custom", color.bright_yellow + "Enter an item number to select it", range(1, i+1))
+
 
 
 # def obstacle():
 #
 
-# searches the room for loot
-def search():
-    # player must have available energy to search for loot
-    if player.stamina > 0:
-        # if the room has available loot, grant it to player and remove energy
-        if len(player.room.loot) > 0:
-            s = random.choice(player.room.loot)
-            player.collect(s)
-            player.stamina -= 1
-        # if no items remain, print this message
-        else:
-            print(color.yellow + "You found all the items in this room!")
-    # if player has no energy, they cannot search for loot
-    else:
-        print(color.red + "You are out of energy!")
+
 
 
 # function allow player to use an item, for example a material or consumable
@@ -628,22 +519,6 @@ def travel(direction):
             print(color.bright_red + "You cant go that direction.")
             true = True
             x = "nope"
-
-
-# called when a player consumes an item
-def consume(item):
-    effect = item.effect
-    if effect == 0:
-        regen = random.randint(3, 5)
-        player.heal(regen)
-    elif effect == 1:
-        print("you aight")
-    elif effect == 2:
-        anim = random.choice(shapes)
-        print("Thought you'd get out of here that easily, huh?")
-        print(f"You turned into a {anim}")
-    elif effect == -1:
-        print(color.bright_red + "You cant eat that.")
 
 
 def kill():
@@ -727,17 +602,10 @@ def user_input(userinput="none", prompt="default", options=()):
                 elif cmd.upper()[0] == "E":
                     open_inv()
                 # v enables developer mode, with in game commands
-                elif cmd.lower() == "v":
-                    devinp = input(color.bright_white + "1) list items in each room.\n2) probability simulation." + color.reset)
-                    dev(devinp)
-                    inp = "dev"
                 # if user presses q, search the room for loot
                 elif cmd.upper()[0] == "Q":
-                    search()
+                    player.search()
                 # first character of any dev command
-                elif cmd[0] == "/" and dev_mode is True:
-                    print(cmd)
-                    dev(cmd)
                 # print invalid command if key pressed is not within control scheme, and inform player of valid commands
                 else:
                     print(color.bright_red + f"Invalid Command. Valid Commands: {controls + controlkeys}")
@@ -782,16 +650,20 @@ def user_input(userinput="none", prompt="default", options=()):
         return inp
 
 
-def dialogue(text):
+def dialogue(text, new=True):
     for item in text:
         print(item, end='', flush=True)
-        time.sleep(.1)
+        time.sleep(.05)
+    if new:
+        print('')
+    else:
+        print('', end="")
 
 
 def main():
     for each in rooms[1:]:
         loot_tier = random.choices([0, 1, 2, 3], weights=[5, 4, 3, 1.5], k=1)[0]
-        loot = gen_loot(3, loot_tier, any_item)
+        loot = Loot.generate(3, loot_tier, loot_pool)
         for loots in loot:
             each.add_loot(loots)
     # creates starting item in the entry room
@@ -811,8 +683,8 @@ def main():
     # print(f"your legs shaking")
     # time.sleep(1)
     # input(f"Press {color.red + controls[1] + color.yellow} to take a step")
-    user_input("custom", "You feel a small object press against your bare foot as you shakily take a step. Press 'q' to"
-               " pick it up.", 'Q')
+    dialogue(color.bright_magenta + "You feel a small object press against your bare foot as you shakily take a step.")
+    user_input("custom", " Press 'q' to pick it up.", 'Q')
     player.collect(flint)
     time.sleep(1)
     user_input("custom", "Press 'e' to open your satchel", 'E')
@@ -821,11 +693,12 @@ def main():
     speak = f"{color.yellow}You take out your {flint.name} and strike it. "
     dialogue(speak)
     time.sleep(2)
-    print(f"The room bursts into view for a split second as the sparks illuminate it", end=', ')
+    dialogue(f"The room bursts into view for a split second as the sparks illuminate it")
+    dialogue(f"You spot a locked trap door on the floor. You take note.")
     time.sleep(2.5)
-    print("then darkness again.. ")
+    dialogue("then darkness again.. ")
     time.sleep(1.5)
-    print("If only you had something to ignite with it...")
+    dialogue("If only you had something to ignite with it...")
     while done is False:
 
         # runs each time the game loops, primary point of interaction
